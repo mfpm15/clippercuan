@@ -76,7 +76,17 @@ def cli(args) -> None:
         sys.exit(1)
 
 
+def _utf8_console() -> None:
+    """Konsol Windows lama (cp1252/cp437) tidak bisa mencetak emoji/aksara non-Latin → paksa UTF-8."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main() -> None:
+    _utf8_console()
     ap = argparse.ArgumentParser(prog="clipper", description="ClipperCuan — AI clipper lokal")
     sub = ap.add_subparsers(dest="cmd")
     ap.add_argument("--port", type=int, default=8765)

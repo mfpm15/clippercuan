@@ -17,7 +17,7 @@ jobs:
             name: ClipperCuan-Windows
           - os: macos-14          # Apple Silicon
             name: ClipperCuan-macOS-AppleSilicon
-          - os: macos-13          # Intel
+          - os: macos-15-intel    # Intel
             name: ClipperCuan-macOS-Intel
     runs-on: ${{ matrix.os }}
     defaults:
