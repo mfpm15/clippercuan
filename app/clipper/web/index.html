@@ -69,6 +69,12 @@
               <option value="small">Small — seimbang (disarankan)</option><option value="medium">Medium — akurat, lambat</option>
               <option value="large-v3">Large v3 — paling akurat, butuh RAM 16 GB</option></select></label>
         </div>
+        <label>Sumber subtitle
+          <select id="transcriber" class="in">
+            <option value="auto">Otomatis — subtitle YouTube → API cloud → Whisper di laptop (disarankan)</option>
+            <option value="youtube">Subtitle YouTube (tercepat, tanpa beban komputer)</option>
+            <option value="api">API cloud (Groq/OpenAI/9router — atur di Pengaturan)</option>
+            <option value="local">Whisper di laptop (offline, paling akurat untuk timing)</option></select></label>
         <label class="check"><input type="checkbox" id="translate_en"> Terjemahkan caption ke bahasa Inggris</label>
         <label class="check"><input type="checkbox" id="cut_silence"> Potong jeda hening otomatis (jump cut, lebih padat)</label>
         <label class="check" id="llmRow" hidden><input type="checkbox" id="use_llm" checked> Pilih momen &amp; judul dengan AI (<span id="llmModel"></span>)</label>

@@ -18,15 +18,20 @@ def _free_port(preferred: int) -> int:
     return preferred
 
 
-def serve(port: int, open_browser: bool) -> None:
+def serve(port: int, open_browser: bool, host: str = "127.0.0.1", strict_port: bool = False) -> None:
+    import os
+
     import uvicorn
 
-    port = _free_port(port)
+    if host not in ("127.0.0.1", "localhost") and not os.environ.get("CLIPPER_TOKEN"):
+        sys.exit("Menjalankan di jaringan/cloud wajib memakai password: set variabel CLIPPER_TOKEN dulu.")
+    if host in ("127.0.0.1", "localhost") and not strict_port:
+        port = _free_port(port)  # GUI: cari port kosong bila bentrok
     url = f"http://127.0.0.1:{port}"
     print(f"\n  ClipperCuan berjalan di {url}\n  Biarkan jendela ini terbuka. Tutup untuk keluar.\n")
     if open_browser:
         threading.Timer(1.2, lambda: webbrowser.open(url)).start()
-    uvicorn.run("clipper.server:app", host="127.0.0.1", port=port, log_level="warning")
+    uvicorn.run("clipper.server:app", host=host, port=port, log_level="warning")
 
 
 def cli(args) -> None:
@@ -44,6 +49,8 @@ def cli(args) -> None:
         settings.setdefault("caption", {})["style"] = args.caption
     if args.cut_silence:
         settings["cut_silence"] = True
+    if args.subtitle:
+        settings["transcriber"] = args.subtitle
     if args.emoji:
         settings.setdefault("emoji", {})["enabled"] = True
     if args.export:
@@ -91,6 +98,8 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--host", default="127.0.0.1", help="0.0.0.0 untuk server/cloud (wajib CLIPPER_TOKEN)")
+    ap.add_argument("--strict-port", action="store_true", help="gagal bila port terpakai (dipakai server MCP)")
     c = sub.add_parser("cli", help="proses tanpa UI")
     c.add_argument("source", help="link video atau path file")
     c.add_argument("--clips", type=int, default=6)
@@ -102,6 +111,7 @@ def main() -> None:
     c.add_argument("--max", type=float, default=60)
     c.add_argument("--template", help="nama template gaya yang tersimpan")
     c.add_argument("--cut-silence", action="store_true", help="potong jeda hening")
+    c.add_argument("--subtitle", choices=["auto", "youtube", "api", "local"], help="sumber subtitle (bawaan: auto)")
     c.add_argument("--emoji", action="store_true", help="emoji otomatis")
     c.add_argument("--export", help="salin hasil ke folder ini")
     c.add_argument("--settings", help='JSON pengaturan tambahan, mis. \'{"title":{"preset":"neon"}}\'')
@@ -115,7 +125,7 @@ def main() -> None:
 
         mcp_main()
     else:
-        serve(a.port, not a.no_browser)
+        serve(a.port, not a.no_browser, a.host, a.strict_port)
 
 
 if __name__ == "__main__":

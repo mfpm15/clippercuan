@@ -1,11 +1,8 @@
 name: Build desktop app
 
+# Hanya dijalankan manual (tab Actions → Build desktop app → Run workflow)
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "app/**"
-      - ".github/workflows/build-desktop.yml"
 
 jobs:
   build:

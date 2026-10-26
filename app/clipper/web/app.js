@@ -87,7 +87,7 @@ async function pageNew(override) {
   drop.addEventListener('drop', ev => doUpload(ev.dataTransfer.files[0]));
 
   // klip
-  ['clip_count', 'min_sec', 'max_sec', 'language', 'model'].forEach(k => $('#' + k).value = cfg[k]);
+  ['clip_count', 'min_sec', 'max_sec', 'language', 'model', 'transcriber'].forEach(k => $('#' + k).value = cfg[k]);
   $('#translate_en').checked = !!cfg.translate_en; $('#cut_silence').checked = !!cfg.cut_silence;
   $('#llmRow').hidden = !(SETTINGS.llm.enabled && SETTINGS.llm.model_moments); $('#llmModel').textContent = SETTINGS.llm.model_moments;
   $('#use_llm').checked = cfg.use_llm !== false;
@@ -163,7 +163,7 @@ async function pageNew(override) {
   function collect() {
     const fs = +$('#faceSize').value / 100, pos = { tl: [0, 0], tr: [1 - fs, 0], bl: [0, 1 - fs], br: [1 - fs, 1 - fs] }[facePos];
     return {
-      clip_count: +$('#clip_count').value, min_sec: +$('#min_sec').value, max_sec: +$('#max_sec').value, language: $('#language').value, model: $('#model').value,
+      clip_count: +$('#clip_count').value, min_sec: +$('#min_sec').value, max_sec: +$('#max_sec').value, language: $('#language').value, model: $('#model').value, transcriber: $('#transcriber').value,
       translate_en: $('#translate_en').checked, cut_silence: $('#cut_silence').checked, use_llm: $('#use_llm').checked, layout, smart_crop: $('#smart_crop').checked,
       split: { face: [pos[0], pos[1], fs, fs], game: [0, 0, 1, 1], face_ratio: +$('#faceRatio').value / 100 },
       caption: { enabled: $('#cap_enabled').checked, style: capStyle, font: $('#cap_font').value, size: +$('#cap_size').value, color: $('#cap_color').value, highlight: $('#cap_highlight').value, uppercase: $('#cap_upper').checked, words_per_line: +$('#cap_wpl').value, position: $('#cap_position').value, animation: $('#cap_pop').checked ? 'pop' : 'none' },
@@ -228,12 +228,13 @@ async function pageProject(pid) {
     $('#pMsg').textContent = P.message; $('#pPct').textContent = Math.round(P.progress * 100) + '%' + etaTxt; $('#pBar').style.width = P.progress * 100 + '%';
     $('#pCancel').hidden = !['queued', 'running'].includes(P.status);
     $('#pRetry').hidden = !['error', 'cancelled'].includes(P.status);
-    $('#pWarn').hidden = !P.llm_warning; $('#pWarn').textContent = P.llm_warning || '';
+    const warn = [P.asr_warning, P.llm_warning].filter(Boolean).join(' · ');
+    $('#pWarn').hidden = !warn; $('#pWarn').textContent = warn;
     $('#pErr').hidden = !P.error; if (P.error) $('#pErr pre').textContent = P.error;
     $('#pTools').hidden = !P.clips.length;
     $('#pSplit').hidden = P.settings.layout !== 'split' || !P.media;
     $('#pZip').toggleAttribute('disabled', !P.clips.some(c => c.status === 'done'));
-    if (P.media) $('#pMeta').textContent = `${P.clips.length} klip · sumber ${fmt(P.media.duration)} · ${P.media.width}×${P.media.height}` + (P.language ? ` · bahasa: ${P.language}` : '') + (P.engine ? ` · pemilih: ${P.engine}` : '');
+    if (P.media) $('#pMeta').textContent = `${P.clips.length} klip · sumber ${fmt(P.media.duration)} · ${P.media.width}×${P.media.height}` + (P.language ? ` · bahasa: ${P.language}` : '') + (P.transcript_source ? ` · subtitle: ${({ 'youtube-manual': 'YouTube (manual)', 'youtube-auto': 'YouTube (otomatis)', api: 'API cloud', 'whisper-lokal': 'Whisper lokal' })[P.transcript_source] || P.transcript_source}` : '') + (P.engine ? ` · pemilih: ${P.engine}` : '');
     const ids = new Set(P.clips.map(c => c.id));
     for (const [id, card] of cards) if (!ids.has(id)) { card.el.remove(); cards.delete(id); }
     let added = false;
@@ -582,9 +583,18 @@ async function pageSettings() {
       <datalist id="lModels"></datalist>
       <label>Temperature <input type="range" id="lTemp" min="0" max="100"></label>
       <button class="btn" id="lSave">Simpan</button></div>
+    <div class="card"><h3>Transkripsi cloud (opsional)</h3>
+      <p class="hint">Subtitle dibuat di server cloud, bukan di laptop — cocok untuk laptop pas-pasan. Format OpenAI <code>/audio/transcriptions</code>: Groq (gratis/murah, sangat cepat), OpenAI, atau 9router bila mendukung audio.</p>
+      <div class="row3"><label>Base URL<input class="in" id="aUrl" placeholder="https://api.groq.com/openai/v1"></label><label>API key<input class="in" id="aKey" type="password" placeholder="gsk_…"></label><label>Model<input class="in" id="aModel" placeholder="whisper-large-v3"></label></div>
+      <div class="acts"><button class="btn ghost" id="aTest">Tes koneksi</button><button class="btn" id="aSaveAsr">Simpan</button><span class="muted" id="aMsg"></span></div></div>
     <div class="card"><h3>Default proyek</h3><p class="muted">Pengaturan proyek terakhir otomatis dipakai lagi. <button class="btn ghost sm" id="rst">Kembalikan ke bawaan</button></p></div>
     <div class="card"><h3>Info</h3><p class="muted">Versi ${esc(INFO.version)}<br>Folder data &amp; hasil: <b>${esc(INFO.data_dir)}</b></p></div></section>`;
   $('#lOn').checked = L.enabled; $('#lUrl').value = L.base_url; $('#lKey').value = L.api_key; $('#lM1').value = L.model_moments; $('#lM2').value = L.model_titles; $('#lTemp').value = Math.round(L.temperature * 100);
+  const A = SETTINGS.asr;
+  $('#aUrl').value = A.base_url; $('#aKey').value = A.api_key; $('#aModel').value = A.model;
+  const asrForm = () => ({ asr: { base_url: $('#aUrl').value.trim(), api_key: $('#aKey').value, model: $('#aModel').value.trim() } });
+  $('#aTest').onclick = async () => { $('#aMsg').textContent = 'Menguji…'; try { await api('/api/asr/test', { method: 'POST', body: { settings: asrForm() } }); $('#aMsg').textContent = '✓ API transkripsi siap'; } catch (e) { $('#aMsg').textContent = '✗ ' + e.message; } };
+  $('#aSaveAsr').onclick = async () => { SETTINGS = await api('/api/settings', { method: 'POST', body: { settings: asrForm() } }); $('#aKey').value = SETTINGS.asr.api_key; toast('Transkripsi cloud disimpan'); };
   $('#rst').onclick = () => { store.set('lastSettings', {}); toast('Kembali ke pengaturan bawaan'); };
   const form = () => ({ llm: { enabled: $('#lOn').checked, base_url: $('#lUrl').value.trim(), api_key: $('#lKey').value, model_moments: $('#lM1').value.trim(), model_titles: $('#lM2').value.trim(), temperature: +$('#lTemp').value / 100 } });
   $('#lTest').onclick = async () => {

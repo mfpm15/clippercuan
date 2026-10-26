@@ -1,7 +1,10 @@
 """Server lokal (hanya 127.0.0.1) yang melayani UI dan API."""
 from __future__ import annotations
 
+import base64
+import hmac
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -9,14 +12,14 @@ import sys
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from contextlib import asynccontextmanager
 
-from . import __version__, automation, effects, llm, media, project
+from . import __version__, asr, automation, effects, llm, media, project
 from .captions import FONT_PRESETS
 from .config import DATA_DIR, DEFAULTS, UPLOADS_DIR, WEB_DIR
 
@@ -27,6 +30,26 @@ async def lifespan(_app):
 
 
 app = FastAPI(title="ClipperCuan", version=__version__, lifespan=lifespan)
+
+TOKEN = os.environ.get("CLIPPER_TOKEN", "").strip()
+
+
+@app.middleware("http")
+async def auth(request: Request, call_next):
+    """Mode server/cloud: wajib token (Bearer untuk agent, Basic auth untuk browser). Lokal tanpa token = bebas."""
+    if TOKEN:
+        h = request.headers.get("authorization", "")
+        ok = False
+        if h.startswith("Bearer "):
+            ok = hmac.compare_digest(h[7:].strip(), TOKEN)
+        elif h.startswith("Basic "):
+            try:
+                ok = hmac.compare_digest(base64.b64decode(h[6:]).decode("utf-8").split(":", 1)[-1], TOKEN)
+            except Exception:  # noqa: BLE001
+                ok = False
+        if not ok:
+            return Response("Butuh login ClipperCuan", status_code=401, headers={"WWW-Authenticate": 'Basic realm="ClipperCuan"'})
+    return await call_next(request)
 
 
 class NewProject(BaseModel):
@@ -374,6 +397,19 @@ def get_settings():
 def set_settings(body: Settings):
     llm.save_settings(body.settings)
     return llm.public_settings()
+
+
+@app.post("/api/asr/test")
+def asr_test(body: Settings):
+    """Tes API transkripsi cloud memakai nilai form (belum disimpan)."""
+    c = {**llm.load_settings()["asr"], **{k: v for k, v in body.settings.get("asr", {}).items() if v != "••••"}}
+    if not c.get("base_url") or not c.get("model"):
+        raise HTTPException(400, "Isi Base URL dan model")
+    try:
+        asr.test_api(c)
+        return {"ok": True}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, str(e)[:300])
 
 
 @app.post("/api/llm/models")

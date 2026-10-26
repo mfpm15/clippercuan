@@ -28,6 +28,13 @@ DEFAULT_LLM = {
 
 
 # ------------------------------------------------------------------ settings
+DEFAULT_ASR = {                 # transkripsi cloud kompatibel OpenAI (/audio/transcriptions)
+    "base_url": "https://api.groq.com/openai/v1",
+    "api_key": "",
+    "model": "whisper-large-v3",
+    "timeout": 600,
+}
+
 DEFAULT_AUTOMATION = {
     "webhook_url": "",          # POST JSON saat proyek selesai/gagal (untuk AI agent / n8n / Zapier)
     "inbox_enabled": False,     # proses otomatis video yang ditaruh di folder inbox
@@ -44,7 +51,8 @@ def load_settings() -> dict:
         except Exception:
             data = {}
     return {"llm": {**DEFAULT_LLM, **data.get("llm", {})},
-            "automation": {**DEFAULT_AUTOMATION, **data.get("automation", {})}}
+            "automation": {**DEFAULT_AUTOMATION, **data.get("automation", {})},
+            "asr": {**DEFAULT_ASR, **data.get("asr", {})}}
 
 
 def save_settings(new: dict) -> dict:
@@ -55,6 +63,12 @@ def save_settings(new: dict) -> dict:
             llm.pop("api_key")
         cur["llm"].update(llm)
         cur["llm"]["base_url"] = cur["llm"]["base_url"].strip().rstrip("/")
+    if "asr" in new:
+        asr = {k: v for k, v in new["asr"].items() if k in DEFAULT_ASR}
+        if asr.get("api_key") == "••••":
+            asr.pop("api_key")
+        cur["asr"].update(asr)
+        cur["asr"]["base_url"] = cur["asr"]["base_url"].strip().rstrip("/")
     if "automation" in new:
         cur["automation"].update({k: v for k, v in new["automation"].items() if k in DEFAULT_AUTOMATION})
     SETTINGS_FILE.write_text(json.dumps(cur, indent=1), "utf-8")
@@ -64,6 +78,7 @@ def save_settings(new: dict) -> dict:
 def public_settings() -> dict:
     s = load_settings()
     s["llm"]["api_key"] = "••••" if s["llm"]["api_key"] else ""
+    s["asr"]["api_key"] = "••••" if s["asr"]["api_key"] else ""
     return s
 
 

@@ -11,7 +11,7 @@ import traceback
 import uuid
 from pathlib import Path
 
-from . import download, highlights, llm, media, render, transcribe
+from . import asr, download, highlights, llm, media, render, transcribe
 from .config import DEFAULTS, PROJECTS_DIR, deep_merge
 
 _LOCK = threading.RLock()
@@ -120,9 +120,7 @@ def _pipeline(pid: str) -> None:
     if pr.has_audio:
         _progress(pid, 0.18, 0.2)(0, "Mengekstrak audio…")
         media.extract_audio(src, wav)
-        tr = transcribe.load_or_transcribe(
-            work / "transcript.json", wav, model_name=cfg["model"], language=cfg["language"],
-            translate_en=cfg["translate_en"], progress=_progress(pid, 0.2, 0.62), duration=pr.duration)
+        tr = _transcript(pid, p["source"], cfg, work, wav, pr.duration)
         energy = media.audio_energy(wav)
     else:
         tr, energy = {"language": None, "words": [], "segments": []}, __import__("numpy").zeros(1)
@@ -157,6 +155,45 @@ def _pipeline(pid: str) -> None:
         cb(0, f"Render klip {i + 1}/{n}…")
         _render_one(pid, c["id"], tr["words"], pr)
     update(pid, status="done", progress=1.0, message=f"Selesai: {n} klip siap")
+
+
+def _transcript(pid: str, source: str, cfg: dict, work: Path, wav: Path, duration: float) -> dict:
+    """Rantai sumber subtitle: YouTube → API cloud → Whisper lokal (cadangan selalu tersedia)."""
+    mode = cfg.get("transcriber", "auto")
+    key = {"mode": mode, "model": cfg["model"], "language": cfg["language"], "translate_en": cfg["translate_en"]}
+    cache = work / "transcript.json"
+    if cache.exists():
+        data = json.loads(cache.read_text("utf-8"))
+        if data.get("_key") == key:
+            return data
+    cb = _progress(pid, 0.2, 0.62)
+    notes: list[str] = []
+    tr = None
+    if mode in ("auto", "youtube") and asr.is_youtube(source) and not cfg["translate_en"]:
+        cb(0.05, "Mengambil subtitle dari YouTube…")
+        try:
+            tr = asr.youtube_captions(source, cfg["language"])
+            if not tr:
+                notes.append("Video tidak punya subtitle YouTube")
+        except Exception as e:  # noqa: BLE001
+            notes.append(f"Subtitle YouTube gagal ({str(e)[:120]})")
+    acfg = llm.load_settings()["asr"]
+    use_api = mode == "api" or (mode == "auto" and bool(acfg.get("api_key")))
+    if tr is None and use_api:
+        try:
+            tr = asr.api_transcribe(wav, acfg, cfg["language"], cfg["translate_en"], duration, cb)
+        except Exception as e:  # noqa: BLE001
+            notes.append(f"Transkripsi cloud gagal ({str(e)[:160]})")
+            tr = None
+    if tr is None:
+        tr = transcribe.transcribe(wav, cfg["model"], cfg["language"], cfg["translate_en"], cb, duration)
+        tr["source"] = "whisper-lokal"
+    if notes:
+        update(pid, asr_warning=" · ".join(notes) + f". Dipakai: {tr['source']}.")
+    tr["_key"] = key
+    cache.write_text(json.dumps(tr, ensure_ascii=False), "utf-8")
+    update(pid, transcript_source=tr.get("source"))
+    return tr
 
 
 def _llm_moments(tr: dict, energy, duration: float, count: int, mn: float, mx: float) -> list[dict]:

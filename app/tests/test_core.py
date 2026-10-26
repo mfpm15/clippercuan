@@ -129,6 +129,25 @@ def test_active_speaker_switch_and_motion_fallback():
     assert keys[0][1] < 0.3 and keys[-1][1] > 0.7
 
 
+def test_youtube_json3_and_segments():
+    from clipper import asr
+
+    manual = {"events": [{"tStartMs": 1000, "dDurationMs": 2000, "segs": [{"utf8": "halo semua apa kabar."}]},
+                         {"tStartMs": 3500, "dDurationMs": 1500, "segs": [{"utf8": "baik sekali"}]}]}
+    w = asr.parse_json3(manual)
+    assert [x["w"] for x in w] == ["halo", "semua", "apa", "kabar.", "baik", "sekali"]
+    assert w[0]["s"] == 1.0 and w[3]["e"] <= 3.0 and w[4]["s"] == 3.5
+    auto = {"events": [{"tStartMs": 0, "dDurationMs": 2000, "segs": [{"utf8": "satu"}, {"utf8": " dua", "tOffsetMs": 500}]},
+                       {"tStartMs": 2000, "dDurationMs": 10, "aAppend": 1, "segs": [{"utf8": "\n"}]}]}
+    w2 = asr.parse_json3(auto)
+    assert [(x["w"], x["s"]) for x in w2] == [("satu", 0.0), ("dua", 0.5)]
+    tr = asr._finish(w + w2, "id", "youtube-manual")
+    assert all(a["e"] <= b["s"] + 1e-6 for a, b in zip(tr["words"], tr["words"][1:])), "kata tidak boleh bertumpuk"
+    assert tr["segments"][0]["text"].endswith("satu dua") or tr["segments"][0]["text"]
+    assert asr.is_youtube("https://youtu.be/abc") and asr.is_youtube("https://m.youtube.com/watch?v=x")
+    assert not asr.is_youtube("https://www.tiktok.com/@a/video/1")
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

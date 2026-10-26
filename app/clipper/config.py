@@ -41,6 +41,7 @@ DEFAULTS: dict = {
     "language": "auto",          # auto | id | en | ms | ar | ja | ko | es | ...
     "translate_en": False,       # caption diterjemahkan ke Inggris (Whisper translate)
     "model": "small",            # tiny | base | small | medium | large-v3
+    "transcriber": "auto",       # auto | youtube | api | local  (auto: YouTube → API cloud → Whisper lokal)
     "clip_count": 6,
     "min_sec": 20,
     "max_sec": 60,

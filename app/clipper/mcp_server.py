@@ -19,15 +19,18 @@ import urllib.request
 
 from mcp.server.fastmcp import FastMCP
 
-BASE = os.environ.get("CLIPPER_URL", "http://127.0.0.1:8765").rstrip("/")
+BASE = os.environ.get("CLIPPER_URL", "http://127.0.0.1:8765").rstrip("/")   # bisa server cloud
+TOKEN = os.environ.get("CLIPPER_TOKEN", "").strip()
 mcp = FastMCP("clippercuan")
 
 
 # ------------------------------------------------------------------ http helper
 def _call(method: str, path: str, body: dict | None = None, timeout: float = 60):
     data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(BASE + path, data=data, method=method,
-                                 headers={"Content-Type": "application/json"} if data else {})
+    headers = {"Content-Type": "application/json"} if data else {}
+    if TOKEN:
+        headers["Authorization"] = "Bearer " + TOKEN
+    req = urllib.request.Request(BASE + path, data=data, method=method, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read().decode("utf-8")
@@ -44,6 +47,10 @@ def _alive() -> bool:
     try:
         _call("GET", "/api/info", timeout=3)
         return True
+    except RuntimeError as e:
+        if "(401)" in str(e):  # server hidup tapi password salah — jangan coba menyalakan server baru
+            raise RuntimeError("Password ClipperCuan salah/kosong: periksa CLIPPER_TOKEN di konfigurasi MCP.") from None
+        return False
     except Exception:  # noqa: BLE001
         return False
 
@@ -51,10 +58,13 @@ def _alive() -> bool:
 def _ensure_server() -> None:
     if _alive():
         return
-    port = urllib.parse.urlparse(BASE).port or 8765
+    u = urllib.parse.urlparse(BASE)
+    if u.hostname not in ("127.0.0.1", "localhost"):
+        raise RuntimeError(f"Server ClipperCuan di {BASE} tidak bisa dihubungi (cek alamat & CLIPPER_TOKEN).")
+    port = u.port or 8765
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "DETACHED_PROCESS", 0)
     cmd = [sys.executable] if getattr(sys, "frozen", False) else [sys.executable, "-m", "clipper"]
-    subprocess.Popen(cmd + ["--no-browser", "--port", str(port)],
+    subprocess.Popen(cmd + ["--no-browser", "--strict-port", "--port", str(port)],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
                      cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                      creationflags=flags, start_new_session=not sys.platform.startswith("win"))
@@ -84,7 +94,8 @@ def _wait(pid: str, timeout_sec: int) -> dict:
 @mcp.tool()
 def create_clips(source: str, clip_count: int = 6, layout: str = "portrait", template: str = "",
                  language: str = "auto", min_sec: int = 20, max_sec: int = 60, caption_style: str = "",
-                 cut_silence: bool | None = None, emoji: bool | None = None, extra_settings: dict | None = None,
+                 cut_silence: bool | None = None, emoji: bool | None = None, transcriber: str = "",
+                 extra_settings: dict | None = None,
                  wait: bool = False, timeout_sec: int = 3600) -> dict:
     """Buat klip vertikal dari video panjang.
 
@@ -92,6 +103,7 @@ def create_clips(source: str, clip_count: int = 6, layout: str = "portrait", tem
     layout: portrait | square | blur | split | landscape.
     template: nama template gaya yang tersimpan (lihat list_templates); pengaturan lain menimpanya.
     caption_style: box | wbw | karaoke | clean (kosong = ikut template/bawaan).
+    transcriber: auto | youtube | api | local — sumber subtitle (auto: YouTube → API cloud → Whisper lokal).
     extra_settings: pengaturan lanjutan (mis. {"title": {"preset": "neon"}, "music": {"enabled": true, "file": "..."}}).
     wait: true = tunggu sampai semua klip selesai lalu kembalikan hasil (path file video, caption, hashtag).
     """
@@ -107,6 +119,8 @@ def create_clips(source: str, clip_count: int = 6, layout: str = "portrait", tem
         settings.setdefault("caption", {})["style"] = caption_style
     if cut_silence is not None:
         settings["cut_silence"] = cut_silence
+    if transcriber:
+        settings["transcriber"] = transcriber
     if emoji is not None:
         settings.setdefault("emoji", {})["enabled"] = emoji
     for k, v in (extra_settings or {}).items():

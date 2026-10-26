@@ -4,8 +4,11 @@ Ubah video panjang (link YouTube/TikTok/IG atau file) jadi klip vertikal siap up
 tanpa langganan, tanpa kuota, tanpa upload ke cloud.
 
 ## Cara pakai — paket siap pakai (tanpa Python)
-Unduh `ClipperCuan-Windows.zip` / `ClipperCuan-macOS-…zip` dari tab **Actions** repo ini (build terbaru → bagian *Artifacts*),
-ekstrak, lalu jalankan `ClipperCuan.exe` (Windows) atau `ClipperCuan` (macOS: klik kanan → Open pada pertama kali).
+Paket dibuat manual: tab **Actions → Build desktop app → Run workflow**, lalu unduh dari bagian *Artifacts*.
+Jalankan `ClipperCuan.exe` (Windows) atau `ClipperCuan` (macOS: klik kanan → Open pada pertama kali).
+
+## Cara pakai — di server cloud
+Lihat [docs/cloud.md](docs/cloud.md): `docker build` + `docker run` dengan `CLIPPER_TOKEN`.
 
 ## Cara pakai — dari kode sumber (sekali klik)
 1. Pasang **Python 3.10–3.12** dari https://www.python.org/downloads/ (Windows: centang *Add Python to PATH*).
@@ -23,7 +26,7 @@ Hasil tersimpan di folder `~/ClipperCuan/projects/` (tombol **Buka folder** di a
 | Fitur | Keterangan |
 |---|---|
 | Sumber video | Link YouTube/TikTok/Instagram/dll (yt-dlp, maks 1080p) atau file lokal (drag & drop) |
-| Transkripsi | Whisper lokal, timestamp per kata, 14+ bahasa + auto-detect, opsi terjemah ke Inggris |
+| Subtitle otomatis | Mode Otomatis: subtitle YouTube → API cloud (Groq/OpenAI/9router) → Whisper lokal; timestamp per kata, 14+ bahasa, opsi terjemah ke Inggris |
 | Cari momen | Skor hook (pertanyaan/angka/kata pemicu), kata emosional, energi audio, tempo bicara, kalimat utuh |
 | Judul pembuka | Otomatis dari kalimat paling kuat; preset Bar / Outline / Neon / Clean |
 | Caption | Box highlight, Word by word, Karaoke, Clean · 8 font · warna · ukuran · posisi · animasi pop |
@@ -80,6 +83,7 @@ app/tests/           tes otomatis (python app/tests/test_core.py)
 docs/feature-map.md  peta fitur referensi → implementasi
 docs/usulan-fitur.md fitur tambahan versi kita + usulan berikutnya
 docs/agent-api.md    panduan AI agent: MCP, CLI, REST, webhook, inbox
+docs/cloud.md        tanpa membebani laptop: subtitle cloud, server Docker + password
 .github/workflows/   build otomatis paket Windows & macOS + uji asap
 site/                landing page (opsional, untuk jualan)
 ```

@@ -18,10 +18,12 @@ Menu **⚡ AI Agent & otomatisasi** di aplikasi menampilkan konfigurasi siap sal
 Dari kode sumber: `"command": "<folder>/.venv/Scripts/python.exe", "args": ["-m", "clipper", "mcp"], "cwd": "<folder>/app"`.
 
 Server MCP menyalakan server lokal ClipperCuan secara otomatis bila belum berjalan; proyek dari agent juga tampil di UI.
+Untuk server cloud tambahkan `"env": {"CLIPPER_URL": "https://…", "CLIPPER_TOKEN": "…"}` (lihat [cloud.md](cloud.md)).
+`transcriber`: `auto` (YouTube → API cloud → Whisper lokal) · `youtube` · `api` · `local`.
 
 | Tool | Fungsi |
 |---|---|
-| `create_clips(source, clip_count, layout, template, language, min_sec, max_sec, caption_style, cut_silence, emoji, extra_settings, wait, timeout_sec)` | Buat klip dari link/file. `wait=true` → kembali setelah selesai berisi path video |
+| `create_clips(source, clip_count, layout, template, language, min_sec, max_sec, caption_style, cut_silence, emoji, transcriber, extra_settings, wait, timeout_sec)` | Buat klip dari link/file. `wait=true` → kembali setelah selesai berisi path video |
 | `get_project(project_id)` | Status, progres, daftar klip (path MP4/SRT/thumbnail, judul, caption, hashtag, skor, alasan) |
 | `wait_for_project(project_id, timeout_sec)` | Tunggu sampai proyek & render ulang selesai |
 | `list_projects(limit)` | Proyek terbaru |
@@ -41,7 +43,7 @@ ClipperCuan.exe cli "https://youtu.be/xxxx" --clips 5 --template "Podcast Kuning
 # dari kode sumber:  python -m clipper cli ... (di folder app/)
 ```
 `--json` mencetak ringkasan hasil ke stdout (log progres ke stderr). Kode keluar `0` = berhasil.
-Opsi lain: `--layout portrait|square|blur|split|landscape`, `--caption box|wbw|karaoke|clean`, `--lang id`, `--model tiny|base|small|medium|large-v3`, `--min/--max`, `--settings '{"title":{"preset":"neon"}}'`.
+Opsi lain: `--subtitle auto|youtube|api|local`, `--layout portrait|square|blur|split|landscape`, `--caption box|wbw|karaoke|clean`, `--lang id`, `--model tiny|base|small|medium|large-v3`, `--min/--max`, `--settings '{"title":{"preset":"neon"}}'`.
 
 ## 3. REST API (n8n, Make, agent HTTP)
 
