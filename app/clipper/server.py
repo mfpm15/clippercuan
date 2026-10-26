@@ -141,11 +141,19 @@ def frame(pid: str, t: float = 0.0):
     return FileResponse(out, media_type="image/jpeg", headers={"Cache-Control": "max-age=3600"})
 
 
+@app.get("/api/projects/{pid}/source")
+def source_video(pid: str):
+    p = _get(pid)
+    if not p.get("media"):
+        raise HTTPException(409, "Video belum siap")
+    return FileResponse(project.pdir(pid) / p["media"]["file"])
+
+
 @app.get("/files/{pid}/{name}")
 def files(pid: str, name: str):
     d = project.pdir(pid)
     f = (d / name).resolve()
-    if f.parent != d.resolve() or not f.is_file() or f.suffix not in {".mp4", ".jpg", ".ass", ".json", ".srt"}:
+    if f.parent != d.resolve() or not f.is_file() or f.suffix not in {".mp4", ".jpg", ".ass", ".srt"}:
         raise HTTPException(404)
     return FileResponse(f)
 
@@ -162,6 +170,94 @@ def open_folder(pid: str):
     else:
         subprocess.Popen(["xdg-open", str(d)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return {"ok": True, "path": str(d)}
+
+
+class NewClip(BaseModel):
+    start: float
+    end: float
+    title: str = ""
+
+
+class Template(BaseModel):
+    name: str
+    settings: dict
+
+
+@app.post("/api/projects/{pid}/clips")
+def add_clip(pid: str, body: NewClip):
+    _get(pid)
+    try:
+        return project.add_clip(pid, body.start, body.end, body.title)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/api/projects/{pid}/clips/{cid}")
+def del_clip(pid: str, cid: str):
+    _get(pid)
+    return project.delete_clip(pid, cid)
+
+
+@app.get("/api/projects/{pid}/zip")
+def zip_all(pid: str):
+    p = _get(pid)
+    if not any(c.get("status") == "done" for c in p["clips"]):
+        raise HTTPException(409, "Belum ada klip yang selesai")
+    f = project.zip_project(pid)
+    safe = "".join(ch for ch in p.get("title", pid) if ch.isalnum() or ch in " -_").strip()[:50] or pid
+    return FileResponse(f, media_type="application/zip", filename=f"{safe} - klip.zip")
+
+
+@app.get("/api/templates")
+def templates():
+    return project.list_templates()
+
+
+@app.post("/api/templates")
+def save_template(body: Template):
+    try:
+        return project.save_template(body.name, body.settings)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/api/templates/{name}")
+def delete_template(name: str):
+    return project.delete_template(name)
+
+
+@app.get("/api/system")
+def system():
+    """Cek sistem: ffmpeg, GPU, model terunduh, ruang disk, versi komponen."""
+    import platform
+    import subprocess as sp
+
+    from .config import FFMPEG, MODELS_DIR
+
+    out: dict = {"python": platform.python_version(), "os": f"{platform.system()} {platform.release()} ({platform.machine()})"}
+    try:
+        r = sp.run([FFMPEG, "-hide_banner", "-version"], capture_output=True, text=True, timeout=15, creationflags=media._NO_WINDOW)
+        f = sp.run([FFMPEG, "-hide_banner", "-filters"], capture_output=True, text=True, timeout=15, creationflags=media._NO_WINDOW)
+        out["ffmpeg"] = {"path": FFMPEG, "version": r.stdout.split("\n")[0], "libass": " ass " in f.stdout}
+    except Exception as e:  # noqa: BLE001
+        out["ffmpeg"] = {"path": FFMPEG, "error": str(e)}
+    try:
+        import ctranslate2
+
+        out["gpu_cuda"] = ctranslate2.get_cuda_device_count()
+    except Exception:
+        out["gpu_cuda"] = 0
+    for mod in ("yt_dlp", "faster_whisper", "cv2", "fastapi"):
+        try:
+            m = __import__(mod)
+            out.setdefault("versions", {})[mod] = getattr(m, "__version__", None) or getattr(getattr(m, "version", None), "__version__", "?")
+        except Exception:
+            out.setdefault("versions", {})[mod] = None
+    out["models"] = sorted({d.name.replace("models--Systran--faster-whisper-", "") for d in MODELS_DIR.glob("models--*")})
+    du = shutil.disk_usage(DATA_DIR)
+    out["disk_free_gb"] = round(du.free / 1e9, 1)
+    out["data_size_gb"] = round(sum(f.stat().st_size for f in DATA_DIR.rglob("*") if f.is_file()) / 1e9, 2)
+    return out
 
 
 @app.get("/api/settings")

@@ -18,6 +18,9 @@ def fetch(source: str, out_dir: Path, progress: Callable[[float, str], None] = l
     if not is_url(source):
         src = Path(source).expanduser()
         if not src.is_file():
+            prev = [f for f in out_dir.glob("source.*") if f.suffix not in (".part", ".ytdl")]
+            if prev:  # ulangi proyek: file unggahan sudah dipindah ke folder proyek
+                return prev[0], src.stem.split("__", 1)[-1]
             raise FileNotFoundError(f"File tidak ditemukan: {src}")
         dst = out_dir / ("source" + src.suffix.lower())
         if src.resolve() != dst.resolve():

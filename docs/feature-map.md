@@ -9,11 +9,11 @@ Sumber bukti hanya halaman publik socialvisuals.pro (HTML/CSS/JS yang diunduh). 
 | 1 | Link YouTube → puluhan klip | hero, harga "Olah video panjang dari link YouTube atau file lokal" | `download.py` (yt-dlp) + `highlights.py` | ✅ |
 | 2 | Proses di perangkat, tanpa API key/dependency manual | tabel compare "Di perangkat", FAQ #3 | Whisper lokal, ffmpeg via pip, launcher auto-install | ✅ |
 | 3 | Dashboard: preview + pengaturan + hasil | fitur 01 | UI `web/` (proyek, galeri, editor) | ✅ |
-| 4 | Gaming split screen (facecam + gameplay) | fitur 02 | layout `split`, posisi & ukuran facecam | ✅ |
+| 4 | Gaming split screen (facecam + gameplay) | fitur 02 | layout `split` + editor visual seret kotak facecam/gameplay | ✅ |
 | 5 | Multi-language + auto-detect | fitur 03 | pilihan bahasa Whisper + terjemah ke Inggris | ✅ |
 | 6 | Preset font & caption, box highlight, animasi | fitur 04, hero | `captions.py` box/wbw/karaoke/clean, 8 font, pop | ✅ |
 | 7 | Preset title / generate title | fitur 05 | judul otomatis + preset Bar/Outline/Neon/Clean (+AI opsional) | ✅ |
-| 8 | Custom editor per kata | fitur 06 | dialog edit kata (ejaan); gaya per kata individual | ⚠️ sebagian |
+| 8 | Custom editor per kata | fitur 06 | dialog edit kata: ejaan, pilih beberapa kata, warna & ukuran per kata | ✅ |
 | 9 | Custom watermark teks & gambar | fitur 07 | teks (ASS) + logo PNG (overlay) | ✅ |
 | 10 | History gallery | fitur 08 | halaman Riwayat (cari, buka, hapus) | ✅ |
 | 11 | Clip gallery: review, edit judul, render | fitur 09 | kartu klip: judul, mulai/selesai, render ulang, download | ✅ |
@@ -22,5 +22,4 @@ Sumber bukti hanya halaman publik socialvisuals.pro (HTML/CSS/JS yang diunduh). 
 | 14 | Multi-orientation portrait/square/blur | fitur 12 | layout portrait/square/blur/landscape | ✅ |
 | 15 | Lisensi 1 perangkat, aktivasi | FAQ #2 | tidak diperlukan (aplikasi milik sendiri) | — |
 
-Belum ada / ide berikutnya: gaya berbeda per kata (warna/font per kata), B-roll/emoji otomatis, auto-upload ke platform,
-paket installer .exe/.app (PyInstaller), deteksi pembicara aktif saat 2 orang.
+Fitur tambahan di luar referensi dan usulan berikutnya: lihat [usulan-fitur.md](usulan-fitur.md).

@@ -110,6 +110,7 @@ def _pipeline(pid: str) -> None:
     update(pid, status="running", message="Menyiapkan video…")
 
     src, title = download.fetch(p["source"], work, _progress(pid, 0.0, 0.18))
+    _cleanup_upload(p["source"], src)
     pr = media.probe(src)
     update(pid, title=title, media={"file": src.name, "duration": pr.duration, "width": pr.width, "height": pr.height, "fps": pr.fps})
 
@@ -139,7 +140,13 @@ def _pipeline(pid: str) -> None:
     if not moments:
         moments = highlights.find_moments(tr, energy, pr.duration, count, mn, mx)
     update(pid, engine=engine)
-    clips = [{"id": f"clip_{i + 1:02d}", **m, "status": "queued", "words": None, "crop_keys": None} for i, m in enumerate(moments)]
+    lang = tr.get("language")
+    clips = []
+    for i, m in enumerate(moments):
+        post = highlights.post_kit(m.get("text", ""), m["title"], lang)
+        if m.get("hashtags"):
+            post["hashtags"] = m["hashtags"]
+        clips.append({"id": f"clip_{i + 1:02d}", **m, "post": post, "status": "queued", "words": None, "crop_keys": None})
     update(pid, clips=clips, language=tr.get("language"))
 
     n = len(clips)
@@ -206,8 +213,20 @@ def _set_clip(pid: str, cid: str, **fields) -> dict:
     raise KeyError(cid)
 
 
+def _cleanup_upload(source: str, copied: Path) -> None:
+    """File unggahan sudah disalin ke folder proyek → hapus salinan sementara (hemat disk)."""
+    from .config import UPLOADS_DIR
+
+    try:
+        f = Path(source)
+        if f.parent.resolve() == UPLOADS_DIR.resolve() and copied.exists() and f.exists():
+            f.unlink()
+    except OSError:
+        pass
+
+
 # ---------------------------------------------------------------- edit klip
-EDITABLE = {"title", "start", "end", "words", "crop_keys", "overrides"}
+EDITABLE = {"title", "start", "end", "words", "crop_keys", "overrides", "post"}
 
 
 def edit_clip(pid: str, cid: str, changes: dict, rerender: bool = True) -> dict:
@@ -236,6 +255,97 @@ def edit_clip(pid: str, cid: str, changes: dict, rerender: bool = True) -> dict:
     if rerender:
         _JOBS.put(("render", pid, {"cid": cid}))
     return load(pid)
+
+
+def add_clip(pid: str, start: float, end: float, title: str = "") -> dict:
+    """Klip manual dari rentang pilihan pengguna."""
+    with _LOCK:
+        p = load(pid)
+        if not p.get("media"):
+            raise ValueError("Video belum siap")
+        dur = p["media"]["duration"]
+        s, e = max(0.0, float(start)), min(dur, float(end))
+        if e - s < 1:
+            raise ValueError("Durasi klip minimal 1 detik")
+        n = max([int(c["id"].split("_")[-1]) for c in p["clips"]] + [0]) + 1
+        tf = pdir(pid) / "transcript.json"
+        words = json.loads(tf.read_text("utf-8"))["words"] if tf.exists() else []
+        text = " ".join(w["w"] for w in words if s <= w["s"] <= e)
+        title = title.strip() or (highlights.make_title([text]) if text else f"Klip {n}")
+        clip = {"id": f"clip_{n:02d}", "start": round(s, 2), "end": round(e, 2), "score": 0, "title": title, "text": text,
+                "reason": "dipilih manual", "post": highlights.post_kit(text, title, p.get("language")),
+                "status": "queued", "words": None, "crop_keys": None, "manual": True}
+        p["clips"].append(clip)
+        save(p)
+    _JOBS.put(("render", pid, {"cid": clip["id"]}))
+    return load(pid)
+
+
+def delete_clip(pid: str, cid: str) -> dict:
+    with _LOCK:
+        p = load(pid)
+        p["clips"] = [c for c in p["clips"] if c["id"] != cid]
+        save(p)
+    for ext in (".mp4", ".jpg", ".ass", ".srt"):
+        (pdir(pid) / f"{cid}{ext}").unlink(missing_ok=True)
+    return p
+
+
+def zip_project(pid: str) -> Path:
+    """Semua klip + subtitle + teks posting dalam satu ZIP."""
+    import zipfile
+
+    p = load(pid)
+    d = pdir(pid)
+    out = d / "export.zip"
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_STORED) as z:
+        lines = []
+        for i, c in enumerate(sorted(p["clips"], key=lambda c: -c.get("score", 0)), 1):
+            if c.get("status") != "done" or not c.get("file"):
+                continue
+            safe = "".join(ch for ch in (c.get("title") or c["id"]) if ch.isalnum() or ch in " -_").strip()[:50] or c["id"]
+            base = f"{i:02d} - {safe}"
+            z.write(d / c["file"], base + ".mp4")
+            if c.get("srt") and (d / c["srt"]).exists():
+                z.write(d / c["srt"], base + ".srt")
+            post = c.get("post") or {}
+            lines.append(f"[{base}]\nJudul: {c.get('title', '')}\nCaption: {post.get('caption', '')}\n"
+                         f"Hashtag: {' '.join(post.get('hashtags', []))}\n")
+        z.writestr("caption-posting.txt", "\n".join(lines))
+    return out
+
+
+# ---------------------------------------------------------------- template gaya
+def _tpl_file() -> Path:
+    from .config import DATA_DIR
+
+    return DATA_DIR / "templates.json"
+
+
+def list_templates() -> dict:
+    f = _tpl_file()
+    try:
+        return json.loads(f.read_text("utf-8")) if f.exists() else {}
+    except Exception:
+        return {}
+
+
+def save_template(name: str, settings: dict) -> dict:
+    name = name.strip()[:40]
+    if not name:
+        raise ValueError("Nama template kosong")
+    t = list_templates()
+    keep = {k: v for k, v in settings.items() if k not in ("watermark",)} | {"watermark": {**settings.get("watermark", {}), "image": ""}}
+    t[name] = keep
+    _tpl_file().write_text(json.dumps(t, ensure_ascii=False, indent=1), "utf-8")
+    return t
+
+
+def delete_template(name: str) -> dict:
+    t = list_templates()
+    t.pop(name, None)
+    _tpl_file().write_text(json.dumps(t, ensure_ascii=False, indent=1), "utf-8")
+    return t
 
 
 def rerender_all(pid: str, settings: dict) -> dict:
@@ -287,6 +397,14 @@ def _friendly(e: Exception) -> str:
         return "YouTube meminta verifikasi. Coba lagi nanti atau unduh videonya lalu pakai mode File."
     if "Unsupported URL" in s:
         return "Link tidak didukung. Pakai link YouTube/TikTok/Instagram atau unggah file."
+    if "unavailable" in s or "Private video" in s or "removed" in s:
+        return "Video tidak tersedia (dihapus, privat, atau dibatasi wilayah). Periksa link-nya."
+    if "HTTP Error 403" in s or "HTTP Error 429" in s:
+        return "Server video menolak unduhan. Tutup lalu buka aplikasi lagi (pengunduh diperbarui), atau pakai mode File."
+    if "Unable to download" in s or "timed out" in s.lower() or "Connection" in s:
+        return "Gagal mengunduh — periksa koneksi internet lalu klik Ulangi."
+    if isinstance(e, FileNotFoundError):
+        return "File video tidak ditemukan. Unggah ulang lalu coba lagi."
     return s.splitlines()[0][:300] if s else e.__class__.__name__
 
 

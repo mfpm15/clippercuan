@@ -46,6 +46,8 @@ DEFAULTS: dict = {
     "max_sec": 60,
     "layout": "portrait",        # portrait | square | blur | split | landscape
     "smart_crop": True,          # ikuti wajah
+    "cut_silence": False,        # potong jeda hening (jump cut)
+    "silence_gap": 0.55,         # detik jeda minimum yang dipotong
     "split": {                   # area dalam pecahan (0..1) dari frame sumber
         "face": [0.70, 0.62, 0.30, 0.38],   # x, y, w, h  (default: facecam pojok kanan bawah)
         "game": [0.0, 0.0, 1.0, 1.0],

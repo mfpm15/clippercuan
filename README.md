@@ -26,8 +26,17 @@ Hasil tersimpan di folder `~/ClipperCuan/projects/` (tombol **Buka folder** di a
 | Format | Portrait 9:16, Square 1:1, Blur background, Split gaming (facecam + gameplay), Landscape |
 | Smart crop | Ikuti wajah otomatis + editor keyframe manual (geser kotak, timeline) |
 | Watermark | Teks atau logo PNG, posisi & transparansi |
-| Editor klip | Ubah judul, potong ulang (mulai/selesai), perbaiki ejaan caption per kata, ganti format per klip |
-| Galeri & riwayat | Preview, download, render ulang, ubah gaya semua klip sekaligus, cari & hapus proyek |
+| Editor klip | Ubah judul, potong ulang (mulai/selesai), ejaan + warna & ukuran per kata, ganti format per klip, hapus klip |
+| Klip manual | Pilih sendiri potongan dari video (putar, tandai mulai/selesai) |
+| Potong jeda hening | Jump cut otomatis berbasis timestamp kata — caption & crop ikut menyesuaikan |
+| Split gaming visual | Seret & ubah ukuran kotak FACECAM / GAMEPLAY di atas frame video |
+| Ekspor | MP4 per klip, subtitle .SRT, **Download semua (ZIP)** + file caption posting |
+| Paket posting | Caption + hashtag otomatis per klip (bisa diedit, tombol Salin) |
+| Galeri & riwayat | Preview, urut skor/waktu, render ulang, ubah gaya semua klip, cari & hapus proyek, status antrean |
+| Template gaya | Simpan & pakai ulang kombinasi format/caption/judul/watermark |
+| Batch | Banyak link sekaligus (satu per baris) → diproses berurutan |
+| Cek sistem & Bantuan | FFmpeg/libass, GPU, model terunduh, ruang disk; panduan & solusi masalah |
+| Notifikasi | Notifikasi desktop + bunyi saat proyek selesai, estimasi sisa waktu |
 | AI router (opsional) | 9router / API kompatibel OpenAI untuk memilih momen & judul (mati secara default) |
 | Mode CLI | `python -m clipper cli <link/file> --clips 5 --layout portrait` |
 
@@ -57,7 +66,9 @@ app/
     server.py      API lokal (127.0.0.1)
     web/           UI aplikasi
     fonts/         font OFL untuk caption
+app/tests/           tes otomatis (python app/tests/test_core.py)
 docs/feature-map.md  peta fitur referensi → implementasi
+docs/usulan-fitur.md fitur tambahan versi kita + usulan berikutnya
 site/                landing page (opsional, untuk jualan)
 ```
 

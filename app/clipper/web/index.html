@@ -12,8 +12,11 @@
   <div class="brand"><span class="logo">▶</span><b>ClipperCuan</b><small>Studio</small></div>
   <nav>
     <a href="#/new" data-nav="new">＋ Proyek baru</a>
-    <a href="#/history" data-nav="history">▤ Riwayat</a>
+    <a href="#/history" data-nav="history">▤ Riwayat <span class="badge" id="runBadge" hidden></span></a>
+    <a href="#/templates" data-nav="templates">◧ Template gaya</a>
+    <a href="#/system" data-nav="system">◉ Cek sistem</a>
     <a href="#/settings" data-nav="settings">⚙ Pengaturan</a>
+    <a href="#/help" data-nav="help">？ Bantuan</a>
   </nav>
   <div class="side-foot" id="sideFoot"></div>
 </aside>
@@ -29,13 +32,19 @@
     <div class="card">
       <div class="seg" id="srcTabs"><button class="on" data-src="link">Link video</button><button data-src="file">File lokal</button></div>
       <div id="srcLink" class="src-pane">
-        <input id="url" class="in big" type="url" placeholder="https://youtube.com/watch?v=…  (YouTube, TikTok, IG, dll.)" autocomplete="off">
+        <textarea id="url" class="in big" rows="2" placeholder="https://youtube.com/watch?v=…  (YouTube, TikTok, IG, dll.)&#10;Bisa banyak link sekaligus — satu link per baris" autocomplete="off" spellcheck="false"></textarea>
+        <p class="hint" id="urlCount"></p>
       </div>
       <div id="srcFile" class="src-pane" hidden>
         <label class="drop" id="drop"><input type="file" id="file" accept="video/*" hidden>
           <b>Tarik &amp; lepas video di sini</b><span>atau klik untuk memilih (mp4, mov, mkv, webm)</span><em id="fileName"></em>
           <div class="bar" hidden id="upBar"><i></i></div></label>
       </div>
+    </div>
+
+    <div class="card tpl-bar">
+      <label class="inline">Template gaya <select id="tplSel" class="in"><option value="">— Pengaturan terakhir —</option></select></label>
+      <button class="btn ghost sm" id="tplSave" type="button">Simpan sebagai template</button>
     </div>
 
     <div class="grid2">
@@ -60,6 +69,7 @@
               <option value="large-v3">Large v3 — paling akurat, butuh RAM 16 GB</option></select></label>
         </div>
         <label class="check"><input type="checkbox" id="translate_en"> Terjemahkan caption ke bahasa Inggris</label>
+        <label class="check"><input type="checkbox" id="cut_silence"> Potong jeda hening otomatis (jump cut, lebih padat)</label>
         <label class="check" id="llmRow" hidden><input type="checkbox" id="use_llm" checked> Pilih momen &amp; judul dengan AI (<span id="llmModel"></span>)</label>
       </div>
 
@@ -137,7 +147,13 @@
     </div>
     <div class="toolbar" id="pTools" hidden>
       <span class="muted" id="pMeta"></span>
-      <button class="btn ghost" id="pStyleAll">Ubah gaya semua klip</button>
+      <div class="acts">
+        <select class="in sm" id="pSort"><option value="score">Urut: skor tertinggi</option><option value="time">Urut: waktu di video</option></select>
+        <button class="btn ghost sm" id="pAdd">＋ Klip manual</button>
+        <button class="btn ghost sm" id="pSplit" hidden>Atur area split</button>
+        <button class="btn ghost sm" id="pStyleAll">Ubah gaya semua</button>
+        <a class="btn sm" id="pZip">⬇ Download semua (ZIP)</a>
+      </div>
     </div>
     <div class="clips" id="pClips"></div>
   </section>
@@ -156,11 +172,17 @@
         <label class="lbl">Selesai (dtk)<input class="in c-end" type="number" step="0.1" min="0"></label>
       </div>
       <p class="reason muted"></p>
+      <details class="post"><summary>Caption posting &amp; hashtag</summary>
+        <textarea class="in c-post" rows="3"></textarea>
+        <div class="inrow"><button class="btn ghost sm c-copy" type="button">Salin</button><button class="btn ghost sm c-postsave" type="button">Simpan</button><button class="btn ghost sm c-postai" type="button" hidden>✦ Buat dengan AI</button></div>
+      </details>
       <div class="clip-acts">
         <button class="btn sm c-save">Simpan &amp; render</button>
-        <a class="btn ghost sm c-dl" download>⬇ Download</a>
+        <a class="btn ghost sm c-dl" download>⬇ MP4</a>
+        <a class="btn ghost sm c-srt" download>⬇ SRT</a>
         <button class="btn ghost sm c-words">Edit caption</button>
         <button class="btn ghost sm c-crop">Atur crop</button>
+        <button class="btn ghost sm danger c-del" title="Hapus klip">🗑</button>
         <select class="in sm c-layout" title="Format klip ini"><option value="">Format: ikut proyek</option><option value="portrait">Portrait</option><option value="square">Square</option><option value="blur">Blur</option><option value="split">Split gaming</option><option value="landscape">Landscape</option></select>
       </div>
       <p class="err" hidden></p>

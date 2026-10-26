@@ -99,7 +99,54 @@ def non_overlapping(cands: list[dict], count: int, max_overlap: float = 0.15, ta
     return chosen
 
 
+def explain(c: dict, segs: list[dict]) -> str:
+    """Alasan singkat (bahasa manusia) kenapa kandidat ini dipilih skor lokal."""
+    first = segs[c["seg0"]]["text"]
+    toks = _tokens(c["text"])
+    why = []
+    if "?" in first:
+        why.append("dibuka dengan pertanyaan")
+    elif any(t.isdigit() for t in _tokens(first)):
+        why.append("dibuka dengan angka")
+    elif _hook_score(first) >= 0.3:
+        why.append("kalimat pembuka kuat")
+    kw = sorted({t for t in toks if t in HOOK_WORDS and len(t) > 3}, key=toks.index)[:3]
+    if kw:
+        why.append("kata pemicu: " + ", ".join(kw))
+    if any(t in EMO_WORDS for t in toks):
+        why.append("ada emosi")
+    if _ends_sentence(segs[c["seg1"]]["text"]):
+        why.append("berakhir di kalimat utuh")
+    return " · ".join(why) or "alur bicara padat"
+
+
+STOP = set("""yang dan di ke dari ini itu untuk dengan pada adalah juga tidak bisa akan ada kita kami saya aku kamu
+dia mereka atau tapi jadi karena kalau sudah belum lebih sangat banyak satu dua tiga seperti dalam oleh agar
+supaya bahwa saja lagi ya nah oke apa siapa kapan mana mau harus nya pun kenapa mengapa gimana bagaimana
+pertama kedua ketiga terakhir semua orang nggak enggak gak tidak pernah sekarang nanti tadi hari waktu cara
+benar benar sebenarnya ternyata jangan coba sama setiap selalu masih bukan hanya bisa banget kalian
+the a an and or of to in on for is are was were be it this that with as at by you your i we they he she not
+but so if just very more why how what when never always""".split())
+
+
+def post_kit(text: str, title: str, language: str | None = None) -> dict:
+    """Caption posting + hashtag tanpa AI: kata kunci terbanyak + tag umum short video."""
+    toks = [t for t in _tokens(text) if len(t) > 3 and t not in STOP and not t.isdigit()]
+    freq: dict[str, int] = {}
+    for t in toks:
+        freq[t] = freq.get(t, 0) + 1 + (0.5 if len(t) > 6 else 0)  # kata panjang cenderung kata kunci topik
+    keys = [k for k, _ in sorted(freq.items(), key=lambda kv: -kv[1])[:5]]
+    base = ["#fyp", "#reels", "#shorts"] if language != "id" else ["#fyp", "#reelsindonesia", "#shortsindonesia"]
+    tags = [f"#{k}" for k in keys] + base
+    cta = "Setuju nggak? Tulis pendapatmu di komentar 👇" if language in (None, "id", "ms") else "Agree? Tell me in the comments 👇"
+    head = title.strip()
+    if head and head[-1] not in ".?!…":
+        head += "…"
+    return {"caption": f"{head}\n\n{cta}".strip(), "hashtags": tags}
+
+
 def to_moment(c: dict, segs: list[dict], duration: float, score: int, title: str | None = None, **extra) -> dict:
+    extra.setdefault("reason", explain(c, segs))
     return {
         "start": round(max(c["s"] - 0.15, 0), 2), "end": round(min(c["e"] + 0.35, duration), 2), "score": int(score),
         "title": title or make_title([segs[k]["text"] for k in range(c["seg0"], c["seg1"] + 1)]),
