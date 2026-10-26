@@ -17,15 +17,18 @@ Status: ✅ sudah diterapkan di versi kita · 🔜 usulan berikutnya (belum dibu
 | ✅ Notifikasi selesai + estimasi waktu | Tidak perlu menunggu di depan layar |
 | ✅ AI router opsional (9router/OpenAI-compatible) | Pemilih momen & judul lebih cerdas memakai model pilihan sendiri, cadangan otomatis ke skor lokal |
 | ✅ Mode CLI | Otomasi/scheduling lewat terminal |
+| ✅ Emoji otomatis | Visual lebih hidup tanpa edit manual |
+| ✅ Progress bar + CTA akhir | Retensi naik & penonton diarahkan follow |
+| ✅ Musik latar + ducking | Nuansa profesional, suara tetap jelas |
+| ✅ Pembicara aktif (2+ orang) + ikuti gerakan | Podcast multi-host & gameplay tetap ter-framing benar |
+| ✅ AI agent (MCP) + webhook + inbox + ekspor otomatis | Seluruh proses bisa jalan tanpa disentuh manusia |
+| ✅ Paket .exe / macOS via GitHub Actions | Tidak perlu memasang Python; diuji otomatis di Windows & macOS |
 
 ## B. Usulan berikutnya (prioritas)
-1. 🔜 **Deteksi pembicara aktif** (2+ orang di podcast): crop pindah ke orang yang sedang bicara (audio diarization + wajah).
-2. 🔜 **B-roll & emoji otomatis**: sisipkan emoji/stiker sesuai kata kunci caption.
-3. 🔜 **Musik latar + auto-ducking**: pustaka musik bebas royalti, volume turun saat ada suara.
-4. 🔜 **Progress bar & CTA di video**: bar tipis di bawah + "Follow untuk part 2" di akhir.
-5. 🔜 **Auto-upload & jadwal**: TikTok/YouTube Shorts/IG Reels via API resmi.
-6. 🔜 **Skor viral berbasis AI multimodal**: menilai juga visual (gerak, ekspresi), bukan hanya teks/audio.
-7. 🔜 **Installer .exe / .dmg** (PyInstaller) — tanpa perlu memasang Python.
-8. 🔜 **Reframe objek non-wajah** (gameplay, produk) dengan pelacakan objek.
-9. 🔜 **Dubbing / suara AI multi-bahasa** untuk menjangkau pasar luar.
-10. 🔜 **Analitik**: catat performa klip setelah diunggah untuk menyetel skor otomatis.
+1. 🔜 **Auto-upload & jadwal**: TikTok/YouTube Shorts/IG Reels via API resmi.
+2. 🔜 **Skor viral berbasis AI multimodal**: menilai juga visual (gerak, ekspresi), bukan hanya teks/audio.
+3. 🔜 **Dubbing / suara AI multi-bahasa** untuk menjangkau pasar luar.
+4. 🔜 **Analitik**: catat performa klip setelah diunggah untuk menyetel skor otomatis.
+5. 🔜 **B-roll otomatis** dari stok video bebas royalti (Pexels/Pixabay API) sesuai topik kalimat.
+6. 🔜 **Tanda tangan kode** (Windows Authenticode / Apple notarization) agar tidak muncul peringatan keamanan saat instal.
+7. 🔜 **Diarization audio** (pyannote) untuk menggabungkan sinyal suara + wajah pada podcast banyak orang.

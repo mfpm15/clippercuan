@@ -3,7 +3,11 @@
 Ubah video panjang (link YouTube/TikTok/IG atau file) jadi klip vertikal siap upload, **di laptop sendiri**:
 tanpa langganan, tanpa kuota, tanpa upload ke cloud.
 
-## Cara pakai (sekali klik)
+## Cara pakai — paket siap pakai (tanpa Python)
+Unduh `ClipperCuan-Windows.zip` / `ClipperCuan-macOS-…zip` dari tab **Actions** repo ini (build terbaru → bagian *Artifacts*),
+ekstrak, lalu jalankan `ClipperCuan.exe` (Windows) atau `ClipperCuan` (macOS: klik kanan → Open pada pertama kali).
+
+## Cara pakai — dari kode sumber (sekali klik)
 1. Pasang **Python 3.10–3.12** dari https://www.python.org/downloads/ (Windows: centang *Add Python to PATH*).
 2. Buka folder `app/` lalu:
    - **Windows:** klik dua kali `start.bat`
@@ -35,6 +39,12 @@ Hasil tersimpan di folder `~/ClipperCuan/projects/` (tombol **Buka folder** di a
 | Galeri & riwayat | Preview, urut skor/waktu, render ulang, ubah gaya semua klip, cari & hapus proyek, status antrean |
 | Template gaya | Simpan & pakai ulang kombinasi format/caption/judul/watermark |
 | Batch | Banyak link sekaligus (satu per baris) → diproses berurutan |
+| Emoji otomatis | Emoji muncul saat kata kunci diucapkan (uang 💰, rahasia 🤫, kaget 😱 — 50 emoji, ID/EN) |
+| Progress bar & CTA | Garis progres berjalan + ajakan di akhir ("Follow untuk part berikutnya!") |
+| Musik latar | Pustaka musik sendiri, volume, ducking otomatis (musik turun ±12 dB saat ada suara) |
+| Pembicara aktif | Podcast 2+ orang: crop pindah ke wajah yang sedang bicara (YuNet + gerak bibir); tanpa wajah → ikuti gerakan |
+| AI agent (MCP) | 11 tools untuk agent: buat klip, tunggu, edit, tambah/hapus klip, restyle, ekspor, template, cek sistem |
+| Otomatisasi | Webhook saat selesai, folder pantau (inbox) auto-proses, ekspor otomatis ke folder, CLI `--json`, REST API `/docs` |
 | Cek sistem & Bantuan | FFmpeg/libass, GPU, model terunduh, ruang disk; panduan & solusi masalah |
 | Notifikasi | Notifikasi desktop + bunyi saat proyek selesai, estimasi sisa waktu |
 | AI router (opsional) | 9router / API kompatibel OpenAI untuk memilih momen & judul (mati secara default) |
@@ -69,9 +79,11 @@ app/
 app/tests/           tes otomatis (python app/tests/test_core.py)
 docs/feature-map.md  peta fitur referensi → implementasi
 docs/usulan-fitur.md fitur tambahan versi kita + usulan berikutnya
+docs/agent-api.md    panduan AI agent: MCP, CLI, REST, webhook, inbox
+.github/workflows/   build otomatis paket Windows & macOS + uji asap
 site/                landing page (opsional, untuk jualan)
 ```
 
 ## Lisensi komponen
 Whisper (MIT), faster-whisper (MIT), yt-dlp (Unlicense), FFmpeg (LGPL/GPL via imageio-ffmpeg), OpenCV (Apache-2.0),
-font di `app/clipper/fonts` (SIL OFL). Pastikan Anda punya hak atas video yang Anda klip.
+font di `app/clipper/fonts` (SIL OFL), emoji Twemoji (CC-BY 4.0), detektor wajah YuNet (MIT), MCP Python SDK (MIT). Pastikan Anda punya hak atas video yang Anda klip.
