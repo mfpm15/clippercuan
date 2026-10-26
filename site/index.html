@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClipperCuan — Clipper Unlimited, Sekali Bayar</title>
+<meta name="description" content="Aplikasi desktop AI clipper: ubah video panjang jadi klip viral untuk Reels, TikTok, dan Shorts. Bayar sekali, pakai selamanya, tanpa langganan.">
+<meta name="theme-color" content="#07080a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="id_ID">
+<meta property="og:title" content="ClipperCuan — Clipper Unlimited, Sekali Bayar">
+<meta property="og:description" content="Satu link video jadi puluhan klip siap upload. Bayar sekali, akses lifetime.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"ClipperCuan","applicationCategory":"MultimediaApplication","operatingSystem":"Windows 10, Windows 11, macOS 12+","offers":{"@type":"Offer","priceCurrency":"IDR","price":"149000"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten</a>
+
+<!-- ============ PROMO BAR ============ -->
+<div class="promo-bar" id="promoBar" role="region" aria-label="Promo">
+  <span class="promo-dot" aria-hidden="true"></span>
+  <span data-cfg="promoLabel">Promo harian</span>
+  <b class="mono" data-countdown>--:--:--</b>
+  <span class="promo-price"><s data-price="original"></s> <b data-price="now"></b></span>
+  <a class="promo-link" data-buy href="#harga">Beli sekarang</a>
+</div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="Beranda"><span class="logo-mark" aria-hidden="true"></span><span data-cfg="brand">ClipperCuan</span></a>
+    <nav class="nav-links" aria-label="Utama">
+      <a href="#cerita">Cerita</a><a href="#hasil">Hasil</a><a href="#fitur">Fitur</a><a href="#compare">Bandingkan</a><a href="#harga">Harga</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-sm" data-buy href="#harga">Beli sekarang</a>
+    <button class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><span></span><span></span></button>
+  </div>
+  <div class="drawer" id="drawer" hidden>
+    <a href="#cerita">Cerita</a><a href="#hasil">Hasil</a><a href="#fitur">Fitur</a><a href="#compare">Bandingkan</a><a href="#testimoni">Testimoni</a><a href="#requirements">Kebutuhan</a><a href="#harga">Harga</a><a href="#faq">FAQ</a>
+    <a class="btn" data-buy href="#harga">Beli sekarang</a>
+  </div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+</header>
+
+<main id="main">
+<!-- ============ HERO ============ -->
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <a class="pill" href="#testimoni"><span class="pill-dot"></span><span data-community>Komunitas kreator aktif</span><span class="pill-arrow">→</span></a>
+      <p class="eyebrow">No.1 tools clipper untuk kreator</p>
+      <h1 id="hero-title">Unlimited generate.<br><span class="grad">Tanpa limit.</span></h1>
+      <p class="lead">Waktumu terlalu berharga buat ngedit satu-satu. Satu link YouTube jadi puluhan klip. Generate tanpa limit, akses lifetime, cukup sekali bayar.</p>
+      <form class="try" id="tryForm" novalidate>
+        <label class="sr" for="tryUrl">Link video</label>
+        <input id="tryUrl" type="url" inputmode="url" placeholder="Tempel link YouTube untuk simulasi…" autocomplete="off">
+        <button class="btn" type="submit">Mulai</button>
+      </form>
+      <p class="try-msg" id="tryMsg" role="status" aria-live="polite"></p>
+      <div class="hero-cta">
+        <a class="btn btn-ghost" href="#hasil">Lihat hasil klip</a>
+        <span class="os-chips"><i>Windows 10 / 11</i><i>macOS · Intel &amp; Apple Silicon</i></span>
+      </div>
+      <p class="hero-price"><b data-price="now"></b> sekali bayar · Lifetime access</p>
+    </div>
+
+    <div class="hero-stage reveal" aria-hidden="true">
+      <div class="stage-card stage-a"><div class="phone"><div class="screen scene-podcast"><div class="subs" data-subs="box">Kata penting, langsung <em>menonjol</em></div></div></div><span class="stage-label">BOX HIGHLIGHT</span></div>
+      <div class="stage-card stage-b"><div class="phone"><div class="screen scene-stream"><div class="subs" data-subs="wbw">Satu kata. <em>Satu</em> penekanan.</div></div></div><span class="stage-label">WORD BY WORD</span></div>
+      <div class="stage-card stage-c"><div class="phone"><div class="screen scene-edu"><div class="subs subs-serif" data-subs="font">Gaya caption yang <em>berbeda</em></div></div></div><span class="stage-label">SUBTRACT &amp; FONT</span></div>
+    </div>
+  </div>
+  <div class="wrap"><button class="motion" id="motionToggle" aria-pressed="false">Ⅱ Jeda animasi</button></div>
+</section>
+
+<div class="marquee" aria-hidden="true"><div class="marquee-track">
+  <span>PODCAST ✳</span><span>GAMING ✳</span><span>EDUKASI ✳</span><span>CERAMAH ✳</span><span>BISNIS ✳</span><span>INTERVIU ✳</span><span>VLOG ✳</span><span>WEBINAR ✳</span>
+  <span>PODCAST ✳</span><span>GAMING ✳</span><span>EDUKASI ✳</span><span>CERAMAH ✳</span><span>BISNIS ✳</span><span>INTERVIU ✳</span><span>VLOG ✳</span><span>WEBINAR ✳</span>
+</div></div>
+
+<!-- ============ CERITA ============ -->
+<section class="sec" id="cerita">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Cerita</p><h2>Temukan momen.<br>Bentuk gayamu.</h2><p class="sub">Video panjang masuk, klip dengan gayamu keluar.</p></div>
+    <ol class="steps">
+      <li class="step reveal"><span class="step-n">01</span><h3>Momen yang tepat.</h3><p>Temukan potongan menarik dari video panjang, lengkap dengan skor potensi viral.</p><div class="mini mini-find" aria-hidden="true"><i></i><i></i><i class="hot"></i><i></i><i class="hot"></i><i></i></div></li>
+      <li class="step reveal"><span class="step-n">02</span><h3>Gaya yang kamu banget.</h3><p>Atur kata, font, judul, dan framing langsung di editor.</p><div class="mini mini-style" aria-hidden="true"><b>Aa</b><b>Aa</b><b>Aa</b></div></li>
+      <li class="step reveal"><span class="step-n">03</span><h3>Siap untuk dibagikan.</h3><p>Portrait, square, atau split screen untuk kontenmu.</p><div class="mini mini-share" aria-hidden="true"><i></i><i></i><i></i></div></li>
+    </ol>
+    <div class="once reveal">
+      <div><p class="eyebrow">Sekali bayar. Beres.</p><h3>Nggak perlu langganan. Fokus cari cuan.</h3>
+      <p>Tanpa biaya bulanan, tanpa mikirin tagihan lagi. Bayar <b data-price="now"></b> sekali, pakai selamanya.</p></div>
+      <a class="btn" data-buy href="#harga">Beli sekarang</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HASIL ============ -->
+<section class="sec sec-alt" id="hasil">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Hasil nyata</p><h2>Klip siap upload langsung.</h2><p class="sub">Contoh gaya hasil render dari video panjang. Siap untuk Reels · TikTok · Shorts.</p></div>
+    <div class="tabs reveal" role="tablist" aria-label="Kategori konten" id="nicheTabs">
+      <button role="tab" aria-selected="true" data-niche="podcast">Podcast</button>
+      <button role="tab" aria-selected="false" data-niche="gaming">Gaming</button>
+      <button role="tab" aria-selected="false" data-niche="edu">Edukasi</button>
+    </div>
+    <div class="reel" id="reel" aria-live="polite"></div>
+    <p class="note">Tampilan di atas adalah ilustrasi gaya output. Ganti dengan cuplikan hasil asli Anda (lihat README → "Mengganti visual").</p>
+  </div>
+</section>
+
+<!-- ============ FITUR ============ -->
+<section class="sec" id="fitur">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Fitur utama</p><h2>AI bantu beresin.<br>Kamu pegang kendali.</h2></div>
+    <nav class="feat-nav" id="featNav" aria-label="Lompat ke fitur"></nav>
+
+    <article class="feat reveal" id="f1"><div class="feat-copy"><p class="tag">01 · Dashboard</p><h3>Interface bersih, semua di tempat.</h3><p>Preview video, pengaturan klip, dan hasil pipeline dalam satu workspace. Tetap fokus dari bahan awal sampai hasil render.</p><ul class="ticks"><li>Preview video dan pengaturan berdampingan</li><li>Deretan hasil klip mudah dipilih</li><li>Atur gaya, lalu lanjutkan render</li></ul></div>
+      <div class="demo" data-demo="dashboard"></div></article>
+
+    <article class="feat flip reveal" id="f2"><div class="feat-copy"><p class="tag">02 · Gaming split screen <b class="new">BARU</b></p><h3>Gameplay tetap kelihatan. Reaksinya juga.</h3><p>Tata facecam dan gameplay ke dua area berbeda. Pas untuk layar vertikal, tanpa harus memilih antara aksi atau ekspresi.</p><ul class="ticks"><li>Dua area crop untuk facecam dan gameplay</li><li>Susun keduanya dalam satu frame vertikal</li><li>Lihat perbedaan sebelum dan sesudah</li></ul></div>
+      <div class="demo" data-demo="gaming"></div></article>
+
+    <article class="feat reveal" id="f3"><div class="feat-copy"><p class="tag">03 · Multi-language <b class="new">BARU</b></p><h3>Pilihan bahasa, satu workspace.</h3><p>Tentukan bahasa transkripsi dari pengaturan klip: Indonesia, Inggris, dan bahasa lain, atau biarkan auto-detect.</p><ul class="ticks"><li>Pilih bahasa dari menu pengaturan</li><li>Auto-detect sebagai pilihan awal</li><li>Gaya caption tetap bisa kamu sesuaikan</li></ul></div>
+      <div class="demo" data-demo="lang"></div></article>
+
+    <article class="feat flip reveal" id="f4"><div class="feat-copy"><p class="tag">04 · Preset font &amp; caption <b class="new">BARU</b></p><h3>Subtitle keren, punya karakter.</h3><p>Beri penekanan pada kata yang penting. Coba font, warna, box highlight, dan animasi untuk membangun gaya captionmu.</p><ul class="ticks"><li>Pilih preset gaya font</li><li>Box highlight mengikuti kata</li><li>Animasi teks untuk aksen visual</li></ul></div>
+      <div class="demo" data-demo="caption"></div></article>
+
+    <article class="feat reveal" id="f5"><div class="feat-copy"><p class="tag">05 · Preset title <b class="new">BARU</b></p><h3>Sebelum biasa. Sesudah, bikin penasaran.</h3><p>Tambahkan judul pembuka yang terlihat jelas. Pilih preset, sesuaikan kata-katanya, lalu lihat bedanya.</p><ul class="ticks"><li>Generate dan edit judul dari panel klip</li><li>Pilih preset title sesuai gaya konten</li><li>Atur tampilan judul di atas video</li></ul></div>
+      <div class="demo" data-demo="title"></div></article>
+
+    <article class="feat flip reveal" id="f6"><div class="feat-copy"><p class="tag">06 · Custom editor <b class="new">BARU</b></p><h3>Editor penuh: font, animasi, style.</h3><p>Kontrol caption sampai level per kata. Pilih kata yang ingin ditonjolkan, ganti font, warna, ukuran, lalu lihat hasilnya langsung.</p><ul class="ticks"><li>Edit satu kata atau beberapa kata sekaligus</li><li>Pilihan font, warna, dan penekanan</li><li>Preview saat kamu mengatur gaya</li></ul></div>
+      <div class="demo" data-demo="editor"></div></article>
+
+    <article class="feat reveal" id="f7"><div class="feat-copy"><p class="tag">07 · Custom watermark <b class="new">BARU</b></p><h3>Kontenmu, ciri khasmu.</h3><p>Tambahkan logo atau tulisan sebagai watermark. Sesuaikan ukuran, posisi, dan tampilannya agar menyatu dengan video.</p><ul class="ticks"><li>Watermark gambar dan teks</li><li>Atur ukuran serta posisi</li><li>Preview sebelum hasil dirender</li></ul></div>
+      <div class="demo" data-demo="watermark"></div></article>
+
+    <article class="feat flip reveal" id="f8"><div class="feat-copy"><p class="tag">08 · History gallery <b class="new">BARU</b></p><h3>Semua hasil klip, satu galeri.</h3><p>Buka kembali hasil klip lewat galeri. Cari momen yang sudah dikerjakan dan lanjutkan dari koleksi yang kamu punya.</p><ul class="ticks"><li>Grid visual untuk meninjau koleksi klip</li><li>Buka hasil dari riwayat pipeline</li><li>Preview klip sebelum melanjutkan</li></ul></div>
+      <div class="demo" data-demo="history"></div></article>
+
+    <article class="feat reveal" id="f9"><div class="feat-copy"><p class="tag">09 · Clip gallery</p><h3>Pilih momen terbaik. Lanjutkan jadi konten.</h3><p>Tinjau klip dari hasil pipeline, pilih momen yang ingin dipakai, lalu atur judul dan tampilannya sebelum render.</p><ul class="ticks"><li>Review beberapa klip dalam satu tampilan</li><li>Sesuaikan judul untuk tiap klip</li><li>Lanjutkan ke proses render</li></ul></div>
+      <div class="demo" data-demo="cliplist"></div></article>
+
+    <article class="feat flip reveal" id="f10"><div class="feat-copy"><p class="tag">10 · Clip options</p><h3>Kontrol penuh sebelum render.</h3><p>Bentuk hasil akhir sesuai kebutuhanmu. Tentukan framing, gaya caption, dan judul sebelum klip diekspor.</p><ul class="ticks"><li>Pilihan mode crop dan split screen</li><li>Preview hasil saat mengatur tampilan</li><li>Sesuaikan judul di masing-masing klip</li></ul></div>
+      <div class="demo" data-demo="options"></div></article>
+
+    <article class="feat reveal" id="f11"><div class="feat-copy"><p class="tag">11 · Smart crop</p><h3>Crop pintar dengan keyframe.</h3><p>Atur posisi crop dan tambahkan keyframe agar framing berpindah mengikuti bagian video yang kamu pilih.</p><ul class="ticks"><li>Atur area crop langsung di preview (geser kotaknya)</li><li>Tambahkan titik keyframe di timeline</li><li>Lihat hasil portrait sebelum diterapkan</li></ul></div>
+      <div class="demo" data-demo="crop"></div></article>
+
+    <article class="feat flip reveal" id="f12"><div class="feat-copy"><p class="tag">12 · Multi-orientation</p><h3>Satu video. Pilih formatnya.</h3><p>Portrait penuh, square, atau portrait dengan latar blur. Lihat hasil dari bahan video yang sama.</p><ul class="ticks"><li>Portrait 9:16 untuk video vertikal</li><li>Square 1:1 untuk tampilan persegi</li><li>Blur background untuk menjaga komposisi</li></ul></div>
+      <div class="demo" data-demo="orient"></div></article>
+  </div>
+</section>
+
+<!-- ============ BANDINGKAN ============ -->
+<section class="sec sec-alt" id="compare">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Pilih cara kerjamu</p><h2>Kontennya jalan.<br>Tagihan bulanannya berhenti.</h2><p class="sub">Akses yang tetap jadi milikmu, meski kamu lagi rehat bikin konten.</p></div>
+    <div class="table-wrap reveal" tabindex="0" role="region" aria-label="Perbandingan model akses (bisa digeser)">
+      <table class="cmp">
+        <caption class="sr">Perbandingan model akses</caption>
+        <thead><tr><th scope="col">Fitur</th><th scope="col" class="us"><span data-cfg="brand">ClipperCuan</span><small>SEKALI BAYAR</small></th><th scope="col">AI clipper berbasis langganan</th><th scope="col">Editor caption berlangganan</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Pembayaran</th><td class="us"><b data-price="now"></b> sekali bayar</td><td>Langganan bulanan</td><td>Langganan bulanan</td></tr>
+          <tr><th scope="row">Akses</th><td class="us">Lifetime</td><td>Selama berlangganan</td><td>Selama berlangganan</td></tr>
+          <tr><th scope="row">Generate</th><td class="us">Tanpa limit</td><td>Kuota paket</td><td>Kuota paket</td></tr>
+          <tr><th scope="row">Proses video</th><td class="us">Di perangkatmu</td><td>Cloud</td><td>Cloud</td></tr>
+          <tr><th scope="row">Update</th><td class="us">Termasuk</td><td>Ikut paket</td><td>Ikut paket</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Perbandingan bersifat umum untuk model langganan. Kuota dan fitur layanan lain mengikuti paket masing-masing; verifikasi sebelum memasang klaim spesifik.</p>
+  </div>
+</section>
+
+<!-- ============ TESTIMONI ============ -->
+<section class="sec" id="testimoni">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Dari komunitas</p><h2>Sudah dicoba.<br>Ini kata mereka.</h2><p class="sub">Geser untuk baca pengalaman pengguna. Ketuk kartu untuk membaca lengkap.</p></div>
+    <div class="slider reveal">
+      <button class="sl-btn" id="slPrev" aria-label="Sebelumnya">←</button>
+      <div class="sl-track" id="slTrack" tabindex="0" aria-label="Daftar testimoni"></div>
+      <button class="sl-btn" id="slNext" aria-label="Berikutnya">→</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KEBUTUHAN ============ -->
+<section class="sec sec-alt" id="requirements">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Sebelum mulai</p><h2>Cek laptopmu.<br>Siapkan kontenmu.</h2><p class="sub"><span data-cfg="brand">ClipperCuan</span> berjalan di perangkatmu. Spek laptop memengaruhi kecepatan proses.</p></div>
+    <div class="tabs reveal" role="tablist" aria-label="Sistem operasi" id="osTabs">
+      <button role="tab" aria-selected="true" data-os="mac">macOS</button>
+      <button role="tab" aria-selected="false" data-os="win">Windows</button>
+    </div>
+    <div class="req reveal" id="reqBox">
+      <div><span>Sistem operasi</span><b data-req="os"></b></div>
+      <div><span>Prosesor</span><b data-req="cpu"></b></div>
+      <div><span>RAM minimum</span><b>8 GB</b></div>
+      <div><span>RAM disarankan</span><b>16 GB</b></div>
+      <div><span>Ruang disk</span><b>±2 GB + ruang hasil render</b></div>
+      <div><span>Install dependency</span><b>Tidak perlu</b></div>
+    </div>
+    <p class="note">Internet dipakai untuk aktivasi lisensi dan mengambil video dari link. Proses editing tetap di perangkatmu.</p>
+  </div>
+</section>
+
+<!-- ============ HARGA ============ -->
+<section class="sec" id="harga">
+  <div class="wrap">
+    <div class="sec-head reveal"><p class="eyebrow">Sekali bayar / lifetime</p><h2>Kecil biayanya.<br>Panjang pakainya.</h2><p class="sub"><b data-price="now"></b> untuk alat yang bisa kamu pakai lagi besok, bulan depan, dan seterusnya.</p></div>
+    <div class="price-grid">
+      <div class="calc reveal">
+        <p class="eyebrow">Coba hitung sebentar</p>
+        <h3>Uang ngopi kecil.<br>Alatnya kepakai terus.</h3>
+        <div class="calc-big"><span data-price="now"></span> ÷ <b id="calcDays">28</b> hari ≈ <strong id="calcPer">—</strong> / hari</div>
+        <label class="range"><span>Dipakai selama</span><input id="calcRange" type="range" min="7" max="365" step="1" value="28"><output id="calcOut">28 hari</output></label>
+        <p class="note-sm">Ini perumpamaan pembagian biaya. Bayarnya tetap sekali di awal, bukan cicilan atau biaya harian.</p>
+        <div class="calc-sub"><span>Bandingkan langganan</span>
+          <label>Biaya langganan lain / bulan <input id="subCost" type="number" min="0" step="1000" value="250000" inputmode="numeric"></label>
+          <p id="subResult" role="status" aria-live="polite"></p></div>
+      </div>
+
+      <aside class="card-price reveal" aria-label="Paket">
+        <div class="cp-top"><span class="eyebrow">Your creative toolkit</span><span class="badge" data-promo-badge>Promo harian</span></div>
+        <p class="cp-name">Lifetime access</p>
+        <p class="cp-old"><s data-price="original"></s></p>
+        <p class="cp-now"><b data-price="now"></b></p>
+        <p class="cp-note" data-cfg="priceNote">1 lisensi untuk 1 perangkat</p>
+        <p class="cp-timer" data-promo-timer>Promo reset dalam <b class="mono" data-countdown>--:--:--</b></p>
+        <ul class="cp-list">
+          <li><b>Generate klip tanpa limit</b><span>Olah video panjang dari link YouTube atau file lokal.</span></li>
+          <li><b>Caption otomatis, gaya kamu sendiri</b><span>Edit per kata, box highlight, animasi, preset font, dan judul pembuka.</span></li>
+          <li><b>Crop yang pas untuk kontenmu</b><span>Keyframe, split gaming, serta format portrait, square, dan landscape.</span></li>
+          <li><b>Pilihan bahasa &amp; watermark</b><span>Sesuaikan bahasa subtitle dan tambahkan identitasmu.</span></li>
+          <li><b>Lifetime + update fitur</b><span>Bayar sekali untuk 1 perangkat. Tanpa tagihan bulanan.</span></li>
+          <li><b>Live support di komunitas</b><span>Tanya kendala dan diskusi langsung bersama developer.</span></li>
+          <li><b>Akses setelah pembelian</b><span data-cfg="downloadNote">License key dan link download dikirim ke email.</span></li>
+        </ul>
+        <a class="btn btn-block" data-buy href="#harga">Beli sekarang</a>
+        <p class="cp-pay">Pembayaran via checkout · QRIS, e-wallet, transfer &amp; kartu.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="sec sec-alt" id="faq">
+  <div class="wrap narrow">
+    <div class="sec-head reveal"><p class="eyebrow">FAQ / sebelum beli</p><h2>Biar jelas.<br>Biar yakin.</h2><p class="sub">Jawaban singkat untuk pertanyaan yang sering muncul.</p></div>
+    <div class="faq reveal" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ============ CLOSING ============ -->
+<section class="closing">
+  <div class="wrap reveal">
+    <p class="eyebrow">Giliran kontenmu tayang</p>
+    <h2>Videonya sudah ada.<br>Jangan berhenti di folder.</h2>
+    <p class="sub">Kamu sudah luangin waktu buat rekam, ngobrol, dan berbagi. Sekarang kasih kesempatan lebih banyak orang buat nonton.</p>
+    <a class="btn btn-lg" data-buy href="#harga">Beli sekarang</a>
+    <p class="note-sm"><b data-price="now"></b> · sekali bayar · akses lifetime</p>
+  </div>
+</section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap foot-grid">
+    <div><a class="logo" href="#top"><span class="logo-mark" aria-hidden="true"></span><span data-cfg="brand">ClipperCuan</span></a>
+      <p class="foot-tag">Video panjang, banyak kemungkinan.<br>Alat kreator yang mengikuti gayamu.</p><p class="note-sm">macOS &amp; Windows · Desktop app</p></div>
+    <nav aria-label="Produk"><h4>Produk</h4><a href="#top">Beranda</a><a href="#fitur">Fitur</a><a href="#hasil">Hasil klip</a><a href="#harga">Harga lifetime</a></nav>
+    <nav aria-label="Panduan"><h4>Panduan</h4><a href="#requirements">Kebutuhan perangkat</a><a href="#faq">FAQ</a><a href="#testimoni">Testimoni</a></nav>
+    <nav aria-label="Kontak"><h4>Terhubung</h4><a data-link="telegramUrl" href="#" target="_blank" rel="noopener">Komunitas Telegram</a><a data-link="instagramUrl" href="#" target="_blank" rel="noopener">Instagram</a><a data-link="mail" href="#"><span data-cfg="email"></span></a></nav>
+  </div>
+  <div class="wrap foot-bot"><span>© <span id="year">2026</span> <span data-cfg="brand">ClipperCuan</span></span><span>Made for your next great clip.</span><a href="#top">Kembali ke atas ↑</a></div>
+</footer>
+
+<!-- ============ DIALOG TESTIMONI ============ -->
+<dialog id="dlg" aria-labelledby="dlgTitle"><form method="dialog"><button class="dlg-x" aria-label="Tutup">×</button></form><div id="dlgBody"></div></dialog>
+
+<!-- ============ STICKY BUY (mobile) ============ -->
+<div class="sticky-buy" id="stickyBuy"><div><b data-price="now"></b> <small>sekali bayar</small></div><a class="btn btn-sm" data-buy href="#harga">Beli</a></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
