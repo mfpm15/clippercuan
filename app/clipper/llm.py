@@ -28,6 +28,14 @@ DEFAULT_LLM = {
 
 
 # ------------------------------------------------------------------ settings
+DEFAULT_AUTOMATION = {
+    "webhook_url": "",          # POST JSON saat proyek selesai/gagal (untuk AI agent / n8n / Zapier)
+    "inbox_enabled": False,     # proses otomatis video yang ditaruh di folder inbox
+    "inbox_template": "",       # nama template gaya untuk inbox ("" = pengaturan bawaan)
+    "export_dir": "",           # salin hasil klip otomatis ke folder ini
+}
+
+
 def load_settings() -> dict:
     data = {}
     if SETTINGS_FILE.exists():
@@ -35,7 +43,8 @@ def load_settings() -> dict:
             data = json.loads(SETTINGS_FILE.read_text("utf-8"))
         except Exception:
             data = {}
-    return {"llm": {**DEFAULT_LLM, **data.get("llm", {})}}
+    return {"llm": {**DEFAULT_LLM, **data.get("llm", {})},
+            "automation": {**DEFAULT_AUTOMATION, **data.get("automation", {})}}
 
 
 def save_settings(new: dict) -> dict:
@@ -46,6 +55,8 @@ def save_settings(new: dict) -> dict:
             llm.pop("api_key")
         cur["llm"].update(llm)
         cur["llm"]["base_url"] = cur["llm"]["base_url"].strip().rstrip("/")
+    if "automation" in new:
+        cur["automation"].update({k: v for k, v in new["automation"].items() if k in DEFAULT_AUTOMATION})
     SETTINGS_FILE.write_text(json.dumps(cur, indent=1), "utf-8")
     return cur
 

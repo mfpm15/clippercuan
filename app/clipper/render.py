@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import captions, facetrack
+from . import captions, effects, facetrack
 from .config import FONTS_DIR, SIZES
 from .media import Probe, grab_frame, run
 
@@ -128,22 +128,78 @@ def render_clip(work: Path, src: Path, pr: Probe, clip: dict, cfg: dict, words: 
     fonts = f":fontsdir={_fpath(FONTS_DIR)}" if FONTS_DIR.is_dir() else ""
     graph += f";[fr]ass=filename={ass_name}{fonts}[cap]"
     last = "cap"
+    extra_inputs: list[list[str]] = []
+
+    def add_input(opts: list[str]) -> int:
+        extra_inputs.append(opts)
+        return len(extra_inputs)  # indeks input ffmpeg (0 = video sumber)
+
+    W, H = size
     if use_img:
-        mw = int(size[0] * 0.18 * wm.get("size", 42) / 42)
+        idx = add_input(["-i", str(wm["image"])])
+        mw = int(W * 0.18 * wm.get("size", 42) / 42)
         m = 40
         pos = {"tl": f"{m}:{m}", "tr": f"W-w-{m}:{m}", "bl": f"{m}:H-h-{m}", "br": f"W-w-{m}:H-h-{m}", "c": "(W-w)/2:(H-h)/2"}[wm.get("position", "br")]
-        graph += (f";[1:v]scale={mw}:-1,format=rgba,colorchannelmixer=aa={float(wm.get('opacity', .8)):.2f}[wm];"
-                  f"[cap][wm]overlay={pos}[out]")
-        last = "out"
+        graph += (f";[{idx}:v]scale={mw}:-1,format=rgba,colorchannelmixer=aa={float(wm.get('opacity', .8)):.2f}[wm];"
+                  f"[{last}][wm]overlay={pos}[wmo]")
+        last = "wmo"
+
+    # emoji otomatis dari kata kunci (PNG di atas caption, muncul halus)
+    emojis = effects.plan_emojis(sub_words, out_dur) if cfg.get("emoji", {}).get("enabled") else []
+    if emojis:
+        es = int(170 * W / 1080 * float(cfg["emoji"].get("size", 1.0)))
+        cap_pos = cfg["caption"].get("position", "bottom")
+        ey = {"bottom": int(H * 0.60), "middle": int(H * 0.36), "top": int(H * 0.30)}[cap_pos] - es
+        for k, em in enumerate(emojis):
+            idx = add_input(["-loop", "1", "-framerate", "30", "-t", f"{em['e'] + 0.2:.2f}", "-i", em["file"]])
+            d = em["e"] - em["s"]
+            graph += (f";[{idx}:v]scale={es}:{es},format=rgba,fade=t=in:st={em['s']:.2f}:d=0.15:alpha=1,"
+                      f"fade=t=out:st={em['s'] + d - 0.2:.2f}:d=0.2:alpha=1[em{k}];"
+                      f"[{last}][em{k}]overlay=x=(W-w)/2:y={ey}:eof_action=pass:enable='between(t,{em['s']:.2f},{em['e']:.2f})'[e{k}]")
+            last = f"e{k}"
+
+    # progress bar tipis yang berjalan sepanjang klip
+    pb = cfg.get("progress_bar", {})
+    if pb.get("enabled"):
+        ph = max(int(pb.get("height", 12) * W / 1080), 4)
+        col = "0x" + pb.get("color", "#FFC933").lstrip("#")[:6]
+        y = "0" if pb.get("position") == "top" else f"{H - ph}"
+        graph += (f";color=c={col}:s={W}x{ph}:r=30:d={out_dur:.3f}[pbar];"
+                  f"[{last}][pbar]overlay=x='-w+w*t/{out_dur:.3f}':y={y}:eof_action=pass[pbo]")
+        last = "pbo"
+
+    # audio: suara asli (+ potong jeda) dan musik latar dengan ducking otomatis
+    mu = cfg.get("music", {})
+    music_file = mu.get("file") if mu.get("enabled") else None
+    use_music = bool(music_file) and Path(music_file).is_file()
+    orig = ("[ac]" if cut else "[0:a:0]") if pr.has_audio else None
+    audio_map = None
+    if use_music:
+        idx = add_input(["-stream_loop", "-1", "-i", str(music_file)])
+        vol = float(mu.get("volume", 0.15))
+        fade_out = max(out_dur - 1.5, 0)
+        graph += (f";[{idx}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume={vol:.3f},atrim=0:{out_dur:.3f},"
+                  f"afade=t=in:d=0.8,afade=t=out:st={fade_out:.2f}:d=1.5[mus]")
+        if orig and mu.get("duck", True):
+            graph += (f";{orig}aformat=sample_rates=48000:channel_layouts=stereo,asplit[o1][o2];"
+                      f"[mus][o2]sidechaincompress=threshold=0.02:ratio=10:attack=15:release=350[dk];"
+                      f"[o1][dk]amix=inputs=2:duration=first:normalize=0[aout]")
+        elif orig:
+            graph += f";{orig}aformat=sample_rates=48000:channel_layouts=stereo[o1];[o1][mus]amix=inputs=2:duration=first:normalize=0[aout]"
+        else:
+            graph += ";[mus]anull[aout]"
+        audio_map = "[aout]"
+    elif orig:
+        audio_map = "[ac]" if cut else "0:a:0?"
 
     out = work / f"{cid}.mp4"
     tmp = work / f"{cid}.tmp.mp4"
     args = ["-y", "-ss", f"{start:.3f}", "-to", f"{end:.3f}", "-i", str(src)]
-    if use_img:
-        args += ["-i", str(wm["image"])]
+    for opts in extra_inputs:
+        args += opts
     args += ["-filter_complex", graph, "-map", f"[{last}]"]
-    if pr.has_audio:
-        args += ["-map", "[ac]" if cut else "0:a:0?", "-c:a", "aac", "-b:a", "160k", "-ar", "48000"]
+    if audio_map:
+        args += ["-map", audio_map, "-c:a", "aac", "-b:a", "160k", "-ar", "48000"]
     else:
         args += ["-an"]
     args += ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
@@ -152,4 +208,4 @@ def render_clip(work: Path, src: Path, pr: Probe, clip: dict, cfg: dict, words: 
     tmp.replace(out)
     grab_frame(out, min(1.0, out_dur / 2), work / f"{cid}.jpg", width=360)
     return {"file": out.name, "thumb": f"{cid}.jpg", "srt": f"{cid}.srt", "crop_keys": keys, "words": cw,
-            "duration": round(out_dur, 2), "cut_saved": round(dur - out_dur, 2)}
+            "duration": round(out_dur, 2), "cut_saved": round(dur - out_dur, 2), "emojis": [e["code"] for e in emojis]}

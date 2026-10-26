@@ -37,7 +37,7 @@ async function route() {
   $$('.side nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === page || (page === 'p' && a.dataset.nav === 'history')));
   if (!INFO) { INFO = await api('/api/info'); SETTINGS = await api('/api/settings'); $('#sideFoot').textContent = 'Data: ' + INFO.data_dir; }
   if (page === 'p' && id) return pageProject(id);
-  const pages = { history: pageHistory, settings: pageSettings, templates: pageTemplates, system: pageSystem, help: pageHelp };
+  const pages = { history: pageHistory, settings: pageSettings, templates: pageTemplates, system: pageSystem, help: pageHelp, agent: pageAgent };
   return (pages[page] || (() => pageNew()))();
 }
 addEventListener('hashchange', route);
@@ -131,8 +131,34 @@ async function pageNew(override) {
   $('#wm_file').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     const fd = new FormData(); fd.append('file', f);
-    try { const r = await api('/api/upload', { method: 'POST', body: fd }); wmImage = r.path; $('#wm_enabled').checked = true; toast('Logo watermark siap'); } catch (err) { toast(err.message, true); }
+    try { const r = await api('/api/upload', { method: 'POST', body: fd }); wmImage = r.path; $('#wmName').textContent = f.name; $('#wm_enabled').checked = true; toast('Logo watermark siap'); } catch (err) { toast(err.message, true); }
   };
+
+  // efek visual
+  const fxBind = (sw, row) => { const f = () => $(row).classList.toggle('dim', !$(sw).checked); $(sw).addEventListener('change', f); f(); };
+  $('#emoji_on').checked = !!cfg.emoji.enabled; $('#emoji_size').value = Math.round((cfg.emoji.size || 1) * 100);
+  $('#pb_on').checked = !!cfg.progress_bar.enabled; $('#pb_color').value = cfg.progress_bar.color; $('#pb_pos').value = cfg.progress_bar.position;
+  $('#cta_on').checked = !!cfg.cta.enabled; $('#cta_text').value = cfg.cta.text; $('#cta_dur').value = cfg.cta.duration;
+  fxBind('#emoji_on', '#emojiSizeRow'); fxBind('#pb_on', '#pbRow'); fxBind('#cta_on', '#ctaRow');
+
+  // musik latar
+  $('#mu_on').checked = !!cfg.music.enabled; $('#mu_vol').value = Math.round(cfg.music.volume * 100); $('#mu_duck').checked = cfg.music.duck !== false;
+  fxBind('#mu_on', '#muBody');
+  const loadMusic = async (selectFile) => {
+    const list = await api('/api/music').catch(() => []);
+    const selM = $('#mu_file');
+    selM.innerHTML = list.length ? list.map(m => `<option value="${esc(m.file)}">${esc(m.name)}</option>`).join('') : '<option value="">— belum ada musik, unggah dulu —</option>';
+    const want = selectFile || cfg.music.file;
+    if (want && list.some(m => m.file === want)) selM.value = want;
+    const prev = $('#mu_prev'); prev.hidden = !selM.value; if (selM.value) prev.src = '/api/music/play?file=' + encodeURIComponent(selM.value);
+  };
+  $('#mu_file').onchange = () => { const v = $('#mu_file').value; $('#mu_prev').hidden = !v; if (v) $('#mu_prev').src = '/api/music/play?file=' + encodeURIComponent(v); };
+  $('#mu_up').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const fd = new FormData(); fd.append('file', f);
+    try { const r = await api('/api/music', { method: 'POST', body: fd }); await loadMusic(r.file); $('#mu_on').checked = true; $('#mu_on').dispatchEvent(new Event('change')); toast('Musik ditambahkan'); } catch (err) { toast(err.message, true); }
+  };
+  loadMusic();
 
   function collect() {
     const fs = +$('#faceSize').value / 100, pos = { tl: [0, 0], tr: [1 - fs, 0], bl: [0, 1 - fs], br: [1 - fs, 1 - fs] }[facePos];
@@ -143,6 +169,10 @@ async function pageNew(override) {
       caption: { enabled: $('#cap_enabled').checked, style: capStyle, font: $('#cap_font').value, size: +$('#cap_size').value, color: $('#cap_color').value, highlight: $('#cap_highlight').value, uppercase: $('#cap_upper').checked, words_per_line: +$('#cap_wpl').value, position: $('#cap_position').value, animation: $('#cap_pop').checked ? 'pop' : 'none' },
       title: { enabled: $('#ttl_enabled').checked, preset: ttlPreset, duration: +$('#ttl_duration').value, size: cfg.title.size },
       watermark: { enabled: $('#wm_enabled').checked, text: $('#wm_text').value, image: wmImage, position: wmPos, opacity: +$('#wm_opacity').value / 100, size: cfg.watermark.size },
+      emoji: { enabled: $('#emoji_on').checked, size: +$('#emoji_size').value / 100 },
+      progress_bar: { enabled: $('#pb_on').checked, color: $('#pb_color').value, position: $('#pb_pos').value, height: cfg.progress_bar.height },
+      cta: { enabled: $('#cta_on').checked, text: $('#cta_text').value, duration: +$('#cta_dur').value || 3 },
+      music: { enabled: $('#mu_on').checked && !!$('#mu_file').value, file: $('#mu_file').value, volume: +$('#mu_vol').value / 100, duck: $('#mu_duck').checked },
     };
   }
 
@@ -410,13 +440,19 @@ function styleDialog(P, reload) {
       <div class="row3"><label>Warna teks<input type="color" class="in color" id="sCol"></label><label>Warna sorotan<input type="color" class="in color" id="sHl"></label><label>Ukuran<input type="number" class="in" id="sSize" min="40" max="140"></label></div>
       <label class="check"><input type="checkbox" id="sCapOn"> Tampilkan caption</label><label class="check"><input type="checkbox" id="sTtlOn"> Tampilkan judul</label>
       <label class="check"><input type="checkbox" id="sCut"> Potong jeda hening</label>
+      <label class="check"><input type="checkbox" id="sEmo"> Emoji otomatis</label><label class="check"><input type="checkbox" id="sPb"> Progress bar</label>
+      <label class="check"><input type="checkbox" id="sCta"> Ajakan di akhir: <input class="in" id="sCtaT" style="max-width:260px"></label>
+      <label class="check"><input type="checkbox" id="sMu"> Musik latar (${esc((s.music.file || '').split(/[\\/]/).pop() || 'pilih di Proyek baru')})</label>
       <label class="check"><input type="checkbox" id="sWmOn"> Watermark teks: <input class="in" id="sWm" style="max-width:220px"></label>
       <div class="acts"><button class="btn" id="sGo">Render ulang semua</button></div>`;
     $('#sLay', b).value = s.layout; $('#sCap', b).value = s.caption.style; $('#sFont', b).value = s.caption.font; $('#sTtl', b).value = s.title.preset;
     $('#sCol', b).value = s.caption.color; $('#sHl', b).value = s.caption.highlight; $('#sSize', b).value = s.caption.size;
-    $('#sCapOn', b).checked = s.caption.enabled; $('#sTtlOn', b).checked = s.title.enabled; $('#sCut', b).checked = !!s.cut_silence; $('#sWmOn', b).checked = s.watermark.enabled; $('#sWm', b).value = s.watermark.text;
+    $('#sCapOn', b).checked = s.caption.enabled; $('#sTtlOn', b).checked = s.title.enabled; $('#sCut', b).checked = !!s.cut_silence;
+    $('#sEmo', b).checked = !!s.emoji?.enabled; $('#sPb', b).checked = !!s.progress_bar?.enabled; $('#sCta', b).checked = !!s.cta?.enabled; $('#sCtaT', b).value = s.cta?.text || '';
+    $('#sMu', b).checked = !!s.music?.enabled; $('#sMu', b).disabled = !s.music?.file; $('#sWmOn', b).checked = s.watermark.enabled; $('#sWm', b).value = s.watermark.text;
     $('#sGo', b).onclick = async () => {
-      const ns = { cut_silence: $('#sCut', b).checked, caption: { style: $('#sCap', b).value, font: $('#sFont', b).value, color: $('#sCol', b).value, highlight: $('#sHl', b).value, size: +$('#sSize', b).value, enabled: $('#sCapOn', b).checked },
+      const ns = { cut_silence: $('#sCut', b).checked, emoji: { enabled: $('#sEmo', b).checked }, progress_bar: { enabled: $('#sPb', b).checked },
+        cta: { enabled: $('#sCta', b).checked, text: $('#sCtaT', b).value }, music: { enabled: $('#sMu', b).checked && !!s.music?.file }, caption: { style: $('#sCap', b).value, font: $('#sFont', b).value, color: $('#sCol', b).value, highlight: $('#sHl', b).value, size: +$('#sSize', b).value, enabled: $('#sCapOn', b).checked },
         title: { preset: $('#sTtl', b).value, enabled: $('#sTtlOn', b).checked }, watermark: { enabled: $('#sWmOn', b).checked, text: $('#sWm', b).value } };
       if ($('#sLay', b).value !== s.layout) ns.layout = $('#sLay', b).value;
       try { await api(`/api/projects/${P.id}/rerender`, { method: 'POST', body: { settings: ns } }); close(); toast('Render ulang semua klip…'); reload(); } catch (e) { toast(e.message, true); }
@@ -501,6 +537,36 @@ function pageHelp() {
     <li><b>Proses lambat</b>: pilih model Tiny/Base, kurangi jumlah klip, atau tutup aplikasi berat lain.</li>
     <li><b>Hasil di mana?</b> Klik <b>Buka folder</b> di halaman proyek. Lokasi data: <code>${esc(INFO.data_dir)}</code></li></ul></div>
   <div class="card"><h3>Versi</h3><p class="muted">ClipperCuan ${esc(INFO.version)} · berjalan lokal di http://127.0.0.1 — video tidak diunggah ke mana pun.</p></div></section>`;
+}
+
+/* ================= AI AGENT & OTOMATISASI ================= */
+async function pageAgent() {
+  const [st, info, tpls] = await Promise.all([api('/api/settings'), api('/api/agent/info'), api('/api/templates')]);
+  const A = st.automation;
+  const mcp = JSON.stringify(info.mcp_config, null, 2);
+  view.innerHTML = `<section class="page"><header class="page-h"><h1>AI Agent &amp; otomatisasi</h1><p>Jalankan ClipperCuan tanpa klik: dari AI agent (MCP), webhook, folder pantau, atau baris perintah.</p></header>
+  <div class="card"><h3>1 · Sambungkan AI agent (MCP)</h3>
+    <p class="hint">Tempel konfigurasi ini ke klien MCP (Claude Desktop/Code, Cursor, atau agent kamu). Agent mendapat 11 tools: <code>create_clips</code>, <code>get_project</code>, <code>wait_for_project</code>, <code>edit_clip</code>, <code>add_clip</code>, <code>delete_clip</code>, <code>restyle_project</code>, <code>export_project</code>, <code>list_projects</code>, <code>list_templates</code>, <code>system_check</code>. Server aplikasi dinyalakan otomatis bila belum jalan.</p>
+    <pre class="code" id="mcpCfg"></pre><div class="acts"><button class="btn ghost sm" data-copy="mcpCfg">Salin konfigurasi</button></div>
+    <p class="hint">Contoh perintah ke agent: <i>"Buat 5 klip dari https://youtu.be/xxxx pakai template Podcast Kuning, tunggu selesai, lalu kirim path videonya."</i></p></div>
+  <div class="card"><h3>2 · Otomatisasi tanpa sentuhan</h3>
+    <label>Webhook saat proyek selesai/gagal (n8n, Make, Zapier, agent kamu)<div class="inrow"><input class="in" id="aHook" placeholder="https://… /webhook"><button class="btn ghost sm" id="aHookTest" type="button">Tes</button></div></label>
+    <label>Salin hasil otomatis ke folder<input class="in" id="aExport" placeholder="mis. D:\\Konten\\Siap Upload  atau  /Users/kamu/Konten"></label>
+    <div class="fx-row"><div><b>Folder pantau (inbox)</b><span>Taruh video di folder ini → otomatis diproses. Cocok untuk agent yang mengunduh video sendiri.</span></div><label class="sw"><input type="checkbox" id="aInbox"><span></span></label></div>
+    <div class="row2"><label>Folder inbox<input class="in" readonly id="aInboxDir"></label><label>Template untuk inbox<select class="in" id="aInboxTpl"><option value="">Pengaturan bawaan</option></select></label></div>
+    <div class="acts"><button class="btn" id="aSave">Simpan</button><button class="btn ghost" id="aScan" type="button">Cek inbox sekarang</button></div></div>
+  <div class="card"><h3>3 · Baris perintah (CLI)</h3><pre class="code" id="cliEx"></pre><div class="acts"><button class="btn ghost sm" data-copy="cliEx">Salin</button></div></div>
+  <div class="card"><h3>4 · REST API</h3><p class="hint">Semua fitur UI tersedia lewat HTTP lokal. Dokumentasi interaktif: <a href="/docs" target="_blank" style="color:var(--acc)">/docs</a>. Ringkasan hasil untuk agent: <code>GET /api/projects/{id}/summary</code>.</p>
+    <pre class="code" id="restEx"></pre></div></section>`;
+  $('#mcpCfg').textContent = mcp;
+  $('#cliEx').textContent = `${info.cli} "https://youtu.be/xxxx" --clips 5 --template "Podcast Kuning" --emoji --cut-silence --json\n${info.cli} "D:/video/podcast.mp4" --layout split --export "D:/Konten" --json`;
+  $('#restEx').textContent = `POST /api/projects  {"source": "https://youtu.be/xxxx", "settings": {"clip_count": 5, "layout": "portrait"}}\nGET  /api/projects/{id}/summary   → status, progress, clips[].video_path, caption, hashtags\nPOST /api/projects/{id}/export    {"folder": "D:/Konten"}\n\nWebhook (POST JSON): {"event": "project.done", "project_id": "…", "title": "…", "clips": [{"video_path": "…", "srt_path": "…", "caption": "…", "hashtags": ["#…"]}]}`;
+  $$('[data-copy]').forEach(b => b.onclick = async () => { const t = $('#' + b.dataset.copy).textContent; try { await navigator.clipboard.writeText(t); } catch { const ta = document.createElement('textarea'); ta.value = t; document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove(); } toast('Disalin'); });
+  $('#aHook').value = A.webhook_url; $('#aExport').value = A.export_dir; $('#aInbox').checked = A.inbox_enabled; $('#aInboxDir').value = info.inbox_dir;
+  Object.keys(tpls).forEach(n => $('#aInboxTpl').append(new Option(n, n))); $('#aInboxTpl').value = A.inbox_template || '';
+  $('#aHookTest').onclick = async () => { try { const r = await api('/api/automation/test-webhook', { method: 'POST', body: { url: $('#aHook').value } }); toast('✓ Webhook menjawab ' + r.status); } catch (e) { toast(e.message, true); } };
+  $('#aSave').onclick = async () => { await api('/api/settings', { method: 'POST', body: { settings: { automation: { webhook_url: $('#aHook').value.trim(), export_dir: $('#aExport').value.trim(), inbox_enabled: $('#aInbox').checked, inbox_template: $('#aInboxTpl').value } } } }); toast('Otomatisasi disimpan'); };
+  $('#aScan').onclick = async () => { const r = await api('/api/automation/inbox/scan', { method: 'POST' }); toast(r.created.length ? `${r.created.length} video masuk antrean` : 'Tidak ada video baru (atau inbox nonaktif)'); badge(); };
 }
 
 /* ================= PENGATURAN ================= */

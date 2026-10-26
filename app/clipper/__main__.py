@@ -30,12 +30,27 @@ def serve(port: int, open_browser: bool) -> None:
 
 
 def cli(args) -> None:
-    from . import project
+    from . import automation, project
 
-    settings = {"clip_count": args.clips, "layout": args.layout, "language": args.lang, "model": args.model,
-                "min_sec": args.min, "max_sec": args.max}
+    settings: dict = {}
+    if args.template:
+        tpl = project.list_templates()
+        if args.template not in tpl:
+            sys.exit(f"Template '{args.template}' tidak ada. Tersedia: {', '.join(tpl) or '(kosong)'}")
+        settings.update(tpl[args.template])
+    settings.update({"clip_count": args.clips, "layout": args.layout, "language": args.lang, "model": args.model,
+                     "min_sec": args.min, "max_sec": args.max})
     if args.caption:
-        settings["caption"] = {"style": args.caption}
+        settings.setdefault("caption", {})["style"] = args.caption
+    if args.cut_silence:
+        settings["cut_silence"] = True
+    if args.emoji:
+        settings.setdefault("emoji", {})["enabled"] = True
+    if args.export:
+        settings["export_dir"] = args.export
+    if args.settings:
+        settings.update(json.loads(args.settings))
+    log = (lambda *a: print(*a, file=sys.stderr, flush=True)) if args.json else (lambda *a: print(*a, flush=True))
     project.start_worker()  # sebelum create: pemulihan job terputus tidak boleh menyentuh proyek baru
     p = project.create(args.source, settings)
     last = ""
@@ -43,16 +58,22 @@ def cli(args) -> None:
         p = project.load(p["id"])
         line = f"[{p['progress'] * 100:5.1f}%] {p['message']}"
         if line != last:
-            print(line, flush=True)
+            log(line)
             last = line
         if p["status"] in ("done", "error", "cancelled"):
             break
         time.sleep(0.5)
+    time.sleep(0.5)  # beri waktu ekspor otomatis/webhook
+    p = project.load(p["id"])
+    if args.json:
+        print(json.dumps(automation.summary(p), indent=1, ensure_ascii=False))
+    else:
+        for c in automation.summary(p)["clips"]:
+            print(f"  ★{c['score']:>3}  {c['title']}\n        {c['video_path']}")
+        print("Folder hasil:", project.pdir(p["id"]), ("\nDiekspor ke: " + p["exported_to"]) if p.get("exported_to") else "")
     if p["status"] != "done":
-        print(p.get("error") or p["message"], file=sys.stderr)
+        log(p.get("error") or p["message"])
         sys.exit(1)
-    print(json.dumps([{k: c.get(k) for k in ("id", "score", "start", "end", "title", "file", "status")} for c in p["clips"]], indent=1, ensure_ascii=False))
-    print("Folder hasil:", project.pdir(p["id"]))
 
 
 def main() -> None:
@@ -69,9 +90,20 @@ def main() -> None:
     c.add_argument("--caption", choices=["box", "wbw", "karaoke", "clean"])
     c.add_argument("--min", type=float, default=20)
     c.add_argument("--max", type=float, default=60)
+    c.add_argument("--template", help="nama template gaya yang tersimpan")
+    c.add_argument("--cut-silence", action="store_true", help="potong jeda hening")
+    c.add_argument("--emoji", action="store_true", help="emoji otomatis")
+    c.add_argument("--export", help="salin hasil ke folder ini")
+    c.add_argument("--settings", help='JSON pengaturan tambahan, mis. \'{"title":{"preset":"neon"}}\'')
+    c.add_argument("--json", action="store_true", help="cetak hasil sebagai JSON (untuk agent/skrip)")
+    sub.add_parser("mcp", help="jalankan server MCP (stdio) untuk AI agent")
     a = ap.parse_args()
     if a.cmd == "cli":
         cli(a)
+    elif a.cmd == "mcp":
+        from .mcp_server import main as mcp_main
+
+        mcp_main()
     else:
         serve(a.port, not a.no_browser)
 

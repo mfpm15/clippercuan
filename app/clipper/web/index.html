@@ -15,6 +15,7 @@
     <a href="#/history" data-nav="history">▤ Riwayat <span class="badge" id="runBadge" hidden></span></a>
     <a href="#/templates" data-nav="templates">◧ Template gaya</a>
     <a href="#/system" data-nav="system">◉ Cek sistem</a>
+    <a href="#/agent" data-nav="agent">⚡ AI Agent &amp; otomatisasi</a>
     <a href="#/settings" data-nav="settings">⚙ Pengaturan</a>
     <a href="#/help" data-nav="help">？ Bantuan</a>
   </nav>
@@ -118,10 +119,32 @@
         <h3 class="mt">Watermark <label class="sw"><input type="checkbox" id="wm_enabled"><span></span></label></h3>
         <div class="row2">
           <label>Teks<input id="wm_text" class="in" maxlength="40"></label>
-          <label>Logo PNG (opsional)<input type="file" id="wm_file" class="in" accept="image/png,image/jpeg,image/webp"></label>
+          <label>Logo PNG (opsional)<span class="inrow"><label class="btn ghost sm upbtn">＋ Pilih logo<input type="file" id="wm_file" accept="image/png,image/jpeg,image/webp" hidden></label><span class="muted ell" id="wmName">belum ada</span></span></label>
         </div>
         <div class="chips" id="wmPos"><button data-v="tl">↖</button><button data-v="tr">↗</button><button data-v="c">●</button><button data-v="bl">↙</button><button data-v="br">↘</button></div>
         <label>Transparansi <input type="range" id="wm_opacity" min="20" max="100"></label>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Efek visual</h3>
+        <div class="fx-row"><div><b>Emoji otomatis</b><span>Emoji muncul saat kata kunci diucapkan (uang 💰, rahasia 🤫, kaget 😱…)</span></div><label class="sw"><input type="checkbox" id="emoji_on"><span></span></label></div>
+        <label id="emojiSizeRow">Ukuran emoji <input type="range" id="emoji_size" min="60" max="160"></label>
+        <div class="fx-row"><div><b>Progress bar</b><span>Garis tipis yang berjalan, bikin penonton bertahan sampai akhir</span></div><label class="sw"><input type="checkbox" id="pb_on"><span></span></label></div>
+        <div class="row2" id="pbRow"><label>Warna<input type="color" id="pb_color" class="in color"></label><label>Posisi<select id="pb_pos" class="in"><option value="bottom">Bawah</option><option value="top">Atas</option></select></label></div>
+        <div class="fx-row"><div><b>Ajakan di akhir (CTA)</b><span>Teks penutup, mis. "Follow untuk part 2"</span></div><label class="sw"><input type="checkbox" id="cta_on"><span></span></label></div>
+        <div class="row2" id="ctaRow"><label>Teks<input id="cta_text" class="in" maxlength="50"></label><label>Durasi (dtk)<input id="cta_dur" type="number" class="in" min="1" max="10"></label></div>
+      </div>
+      <div class="card">
+        <h3>Musik latar <label class="sw"><input type="checkbox" id="mu_on"><span></span></label></h3>
+        <p class="hint">Volume musik turun otomatis saat ada suara (ducking). Pakai musik bebas royalti / milikmu sendiri.</p>
+        <div id="muBody">
+          <div class="inrow"><select id="mu_file" class="in"></select><label class="btn ghost sm upbtn">＋ Unggah<input type="file" id="mu_up" accept="audio/*" hidden></label></div>
+          <audio id="mu_prev" controls preload="none" class="mu-prev"></audio>
+          <label>Volume musik <input type="range" id="mu_vol" min="3" max="60"></label>
+          <label class="check"><input type="checkbox" id="mu_duck"> Ducking otomatis (disarankan)</label>
+        </div>
       </div>
     </div>
 

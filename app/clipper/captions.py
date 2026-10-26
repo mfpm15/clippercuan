@@ -79,6 +79,7 @@ def build_ass(words: list[dict], title: str, cfg: dict, size: tuple[int, int], d
         f"Style: TitleOutline,{font},{tfs},&H00FFFFFF,&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,{max(int(9 * scale), 4)},{max(int(4 * scale), 2)},8,90,90,{int(H * 0.10)},1",
         f"Style: TitleNeon,{font},{tfs},&H00FFFFFF,&H00FFFFFF,&H00FF7B8B,&H00FF7B8B,0,0,0,0,100,100,0,0,1,{max(int(4 * scale), 2)},0,8,90,90,{int(H * 0.10)},1",
         f"Style: TitleClean,{font},{tfs},&H00FFFFFF,&H00FFFFFF,&H00000000,&H96000000,0,0,0,0,100,100,0,0,1,{max(int(3 * scale), 2)},{int(4 * scale)},8,90,90,{int(H * 0.10)},1",
+        f"Style: CTA,{font},{int(64 * scale)},&H00000000,&H00000000,{hl},&H64000000,0,0,0,0,100,100,0,0,3,{int(20 * scale)},0,5,80,80,0,1",
         f"Style: Mark,Arial Black,{int(wm['size'] * scale)},{_ass_color('#FFFFFF', wm['opacity'])},&H00FFFFFF,{_ass_color('#000000', wm['opacity'] * 0.6)},&H00000000,0,0,0,0,100,100,0,0,1,{max(int(2 * scale), 1)},0,2,40,40,40,1",
     ]
     ev: list[str] = []
@@ -136,6 +137,14 @@ def build_ass(words: list[dict], title: str, cfg: dict, size: tuple[int, int], d
         add(2, 0, t_end, style, fx + _esc(title.upper() if preset != "clean" else title))
         if preset == "neon":  # lapisan teks tajam di atas glow
             add(3, 0, t_end, style, r"{\fad(200,0)\bord0}" + _esc(title.upper()))
+
+    # ---- ajakan (CTA) di akhir klip
+    cta = cfg.get("cta", {})
+    if cta.get("enabled") and cta.get("text", "").strip() and duration > 2:
+        c_start = max(duration - float(cta.get("duration", 3)), duration * 0.5)
+        y = int(H * 0.42)
+        add(5, c_start, duration, "CTA", r"{\an5\pos(" + f"{W // 2},{y}" + r")\fad(250,0)\fscx60\fscy60\t(0,220,\fscx108\fscy108)\t(220,350,\fscx100\fscy100)}"
+            + _esc(cta["text"].strip()))
 
     # ---- watermark teks
     if wm["enabled"] and wm.get("text") and not wm.get("image"):

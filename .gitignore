@@ -2,3 +2,5 @@
 __pycache__/
 *.pyc
 app/.venv/
+app/dist/
+app/build/

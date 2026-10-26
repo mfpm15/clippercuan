@@ -71,6 +71,10 @@ DEFAULTS: dict = {
         "duration": 0,           # detik; 0 = sepanjang klip
         "size": 70,
     },
+    "emoji": {"enabled": False, "size": 1.0},
+    "progress_bar": {"enabled": False, "color": "#FFC933", "height": 12, "position": "bottom"},
+    "cta": {"enabled": False, "text": "Follow untuk part berikutnya!", "duration": 3},
+    "music": {"enabled": False, "file": "", "volume": 0.15, "duck": True},
     "watermark": {
         "enabled": False,
         "text": "@namakamu",

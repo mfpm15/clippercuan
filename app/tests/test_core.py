@@ -106,6 +106,29 @@ def test_fallback_without_speech():
     assert len(ms) == 3 and all(m["end"] - m["start"] >= 20 for m in ms)
 
 
+def test_active_speaker_switch_and_motion_fallback():
+    from clipper import facetrack
+
+    # 0-10 dtk: kiri bicara, 10-20 dtk: kanan bicara (4 sampel/dtk); deteksi kanan putus-putus
+    info = []
+    for i in range(80):
+        left_talk = i < 40
+        faces = [(0.25, 0.14, 8.0 if left_talk else 0.1)]
+        if i % 3:  # wajah kanan kadang tidak terdeteksi
+            faces.append((0.74, 0.09, 0.0 if left_talk else 0.8))
+        info.append({"faces": faces, "motion": None})
+    xs = facetrack.choose_targets(info)
+    assert all(abs(x - 0.25) < 0.02 for x in xs[2:40]), "harus tetap di kiri saat kiri bicara"
+    switch = next(i for i, x in enumerate(xs) if i > 40 and abs(x - 0.74) < 0.03)
+    assert switch < 40 + 4 * 5, f"harus pindah ke kanan < 5 dtk, terjadi di sampel {switch}"
+    assert all(abs(x - 0.74) < 0.03 for x in xs[switch:]), "tidak boleh bolak-balik"
+    # tanpa wajah → ikuti gerakan
+    xs2 = facetrack.choose_targets([{"faces": [], "motion": 0.2 + i * 0.01} for i in range(20)])
+    assert xs2[0] == 0.2 and abs(xs2[-1] - 0.39) < 1e-6
+    keys = facetrack.smooth(xs, 1280, 720)
+    assert keys[0][1] < 0.3 and keys[-1][1] > 0.7
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

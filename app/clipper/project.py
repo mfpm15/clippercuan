@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 import queue
+import sys
 import threading
 import time
 import traceback
@@ -78,7 +80,7 @@ def create(source: str, settings: dict | None = None) -> dict:
     pid = time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     p = {
         "id": pid, "source": source, "title": "Memproses…", "status": "queued", "progress": 0.0,
-        "message": "Menunggu antrean", "created": time.time(), "updated": time.time(),
+        "message": "Menunggu antrean", "created": time.time(), "updated": time.time(), "owner": os.getpid(),
         "settings": deep_merge(DEFAULTS, settings), "clips": [], "error": None,
     }
     save(p)
@@ -370,18 +372,59 @@ def _worker() -> None:
             if kind == "pipeline":
                 _CANCEL.discard(pid)
                 _pipeline(pid)
+                _notify(pid, "project.done")
             elif kind == "render":
                 _render_one(pid, extra["cid"])
+                _notify(pid, "clip.rendered", extra["cid"])
         except Cancelled:
             safe_update(pid, status="cancelled", message="Dibatalkan")
+            _notify(pid, "project.cancelled")
         except KeyError:
             pass  # proyek dihapus saat antre
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             if kind == "pipeline":
                 safe_update(pid, status="error", message=_friendly(e), error=traceback.format_exc()[-3000:])
+                _notify(pid, "project.error")
         finally:
             _JOBS.task_done()
+
+
+def _notify(pid: str, event: str, cid: str | None = None) -> None:
+    """Webhook / ekspor otomatis. Render ulang satu klip hanya memicu webhook bila semua klip sudah beres."""
+    from . import automation
+
+    try:
+        if event == "clip.rendered":
+            p = load(pid)
+            if p.get("status") != "done" or any(c.get("status") in ("queued", "rendering") for c in p["clips"]):
+                return
+            event = "project.updated"
+        automation.on_finished(pid, event)
+    except Exception as e:  # noqa: BLE001
+        print(f"[otomatisasi] {e}")
+
+
+def _pid_alive(pid: int) -> bool:
+    if not pid:
+        return False
+    if pid == os.getpid():
+        return True
+    try:
+        if sys.platform.startswith("win"):
+            import ctypes
+
+            h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+            if not h:
+                return False
+            code = ctypes.c_ulong()
+            ctypes.windll.kernel32.GetExitCodeProcess(h, ctypes.byref(code))
+            ctypes.windll.kernel32.CloseHandle(h)
+            return code.value == 259  # STILL_ACTIVE
+        os.kill(pid, 0)
+        return True
+    except (OSError, AttributeError):
+        return False
 
 
 def safe_update(pid: str, **f) -> None:
@@ -416,6 +459,8 @@ def recover_interrupted() -> None:
         except Exception:
             continue
         if p.get("status") in ("queued", "running"):
+            if _pid_alive(p.get("owner", 0)) and p.get("owner") != os.getpid():
+                continue  # sedang dikerjakan proses lain (mis. GUI dan CLI/agent berjalan bersamaan)
             p["status"], p["message"] = "error", "Terhenti karena aplikasi ditutup. Klik Ulangi."
             for c in p.get("clips", []):
                 if c.get("status") in ("queued", "rendering"):
@@ -424,7 +469,7 @@ def recover_interrupted() -> None:
 
 
 def retry(pid: str) -> dict:
-    p = update(pid, status="queued", progress=0.0, message="Menunggu antrean", error=None)
+    p = update(pid, status="queued", progress=0.0, message="Menunggu antrean", error=None, owner=os.getpid())
     _JOBS.put(("pipeline", pid, {}))
     return p
 
@@ -438,3 +483,6 @@ def start_worker() -> None:
         _started = True
         recover_interrupted()
         threading.Thread(target=_worker, daemon=True, name="clipper-worker").start()
+        from . import automation
+
+        automation.start_inbox_watcher()

@@ -1,6 +1,7 @@
 """Server lokal (hanya 127.0.0.1) yang melayani UI dan API."""
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -15,7 +16,7 @@ from pydantic import BaseModel
 
 from contextlib import asynccontextmanager
 
-from . import __version__, llm, media, project
+from . import __version__, automation, effects, llm, media, project
 from .captions import FONT_PRESETS
 from .config import DATA_DIR, DEFAULTS, UPLOADS_DIR, WEB_DIR
 
@@ -51,7 +52,8 @@ def _get(pid: str) -> dict:
 
 @app.get("/api/info")
 def info():
-    return {"version": __version__, "data_dir": str(DATA_DIR), "defaults": DEFAULTS, "fonts": list(FONT_PRESETS)}
+    return {"version": __version__, "data_dir": str(DATA_DIR), "defaults": DEFAULTS, "fonts": list(FONT_PRESETS),
+            "inbox_dir": str(automation.INBOX_DIR)}
 
 
 @app.get("/api/projects")
@@ -84,6 +86,44 @@ async def upload(file: UploadFile = File(...)):
     with open(UPLOADS_DIR / name, "wb") as out:
         shutil.copyfileobj(file.file, out, 4 << 20)
     return {"id": "upload:" + name, "path": str(UPLOADS_DIR / name), "name": file.filename}
+
+
+@app.get("/api/music")
+def music():
+    return effects.list_music()
+
+
+@app.post("/api/music")
+async def upload_music(file: UploadFile = File(...)):
+    ext = Path(file.filename or "musik.mp3").suffix.lower()
+    if ext not in {".mp3", ".m4a", ".aac", ".wav", ".ogg", ".flac"}:
+        raise HTTPException(400, "Format musik tidak didukung (mp3, m4a, wav, ogg, flac)")
+    stem = re.sub(r"[^\w\- ]+", "", Path(file.filename or "musik").stem, flags=re.UNICODE).strip()[:60] or "musik"
+    dst = effects.MUSIC_DIR / f"{stem}{ext}"
+    n = 2
+    while dst.exists():
+        dst = effects.MUSIC_DIR / f"{stem} ({n}){ext}"
+        n += 1
+    with open(dst, "wb") as out:
+        shutil.copyfileobj(file.file, out, 4 << 20)
+    return {"name": dst.stem, "file": str(dst)}
+
+
+@app.delete("/api/music")
+def delete_music(file: str):
+    f = Path(file).resolve()
+    if f.parent != effects.MUSIC_DIR.resolve() or not f.is_file():
+        raise HTTPException(404, "Musik tidak ditemukan")
+    f.unlink()
+    return effects.list_music()
+
+
+@app.get("/api/music/play")
+def play_music(file: str):
+    f = Path(file).resolve()
+    if f.parent != effects.MUSIC_DIR.resolve() or not f.is_file():
+        raise HTTPException(404)
+    return FileResponse(f)
 
 
 @app.get("/api/projects/{pid}")
@@ -190,6 +230,71 @@ def add_clip(pid: str, body: NewClip):
         return project.add_clip(pid, body.start, body.end, body.title)
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+class ExportReq(BaseModel):
+    folder: str = ""
+
+
+@app.get("/api/projects/{pid}/summary")
+def project_summary(pid: str):
+    """Ringkasan ramah agent: path absolut video/SRT/thumbnail + caption & hashtag."""
+    return automation.summary(_get(pid))
+
+
+@app.post("/api/projects/{pid}/export")
+def export_project(pid: str, body: ExportReq):
+    p = _get(pid)
+    if not any(c.get("status") == "done" for c in p["clips"]):
+        raise HTTPException(409, "Belum ada klip yang selesai")
+    if body.folder.strip():
+        path = automation.auto_export({**p, "settings": {**p["settings"], "export_dir": body.folder.strip()}})
+        return {"folder": path}
+    return {"zip": str(project.zip_project(pid))}
+
+
+class HookTest(BaseModel):
+    url: str
+
+
+@app.post("/api/automation/test-webhook")
+def test_webhook(body: HookTest):
+    import urllib.request
+
+    url = body.url.strip()
+    if not url.lower().startswith(("http://", "https://")):
+        raise HTTPException(400, "URL webhook harus diawali http(s)://")
+    payload = json.dumps({"event": "test", "message": "Tes webhook dari ClipperCuan"}).encode()
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json", "User-Agent": "ClipperCuan"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return {"ok": True, "status": r.status}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(502, f"Webhook gagal: {e}")
+
+
+@app.get("/api/agent/info")
+def agent_info():
+    """Info untuk menyambungkan AI agent: perintah MCP siap pakai."""
+    import os as _os
+    import sys as _sys
+
+    app_dir = str(Path(__file__).resolve().parent.parent)
+    py = _os.path.normpath(_sys.executable)  # normpath, bukan realpath: jangan keluar dari venv
+    if getattr(_sys, "frozen", False):  # paket .exe/.app: panggil langsung executable-nya
+        server_cfg = {"command": py, "args": ["mcp"]}
+        cli = f'"{py}" cli'
+    else:
+        server_cfg = {"command": py, "args": ["-m", "clipper", "mcp"], "cwd": app_dir, "env": {"PYTHONPATH": app_dir}}
+        cli = f'cd "{app_dir}" && "{py}" -m clipper cli'
+    return {"python": py, "app_dir": app_dir, "inbox_dir": str(automation.INBOX_DIR), "cli": cli,
+            "mcp_config": {"mcpServers": {"clippercuan": server_cfg}},
+            "api_docs": "/docs"}
+
+
+@app.post("/api/automation/inbox/scan")
+def inbox_scan():
+    return {"created": automation.scan_inbox_once(), "inbox": str(automation.INBOX_DIR)}
 
 
 @app.delete("/api/projects/{pid}/clips/{cid}")
